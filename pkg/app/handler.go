@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -34,6 +35,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("state from smart contract:", state)
 
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(state.Bytes())
+	json.NewEncoder(w).Encode(state)
 }

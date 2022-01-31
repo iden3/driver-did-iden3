@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"context"
 	"math/big"
 	"strings"
 
@@ -27,7 +28,7 @@ func NewStateContract(address string, client *ethclient.Client) (*StateContract,
 
 // GetStateByID call `function getState(uint256 id) public view returns (uint256)` from smart contract.
 // Check `StateABI` for more details.
-func (sc *StateContract) GetStateByID(opts *bind.CallOpts, id *big.Int) (*big.Int, error) {
+func (sc *StateContract) GetStateByID(ctx context.Context, opts *bind.CallOpts, id *big.Int) (*big.Int, error) {
 	var (
 		output1 = new(*big.Int)
 	)
