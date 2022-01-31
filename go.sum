@@ -347,6 +347,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/iden3/go-iden3-core v0.0.12 h1:wmDZU2e5Z7iMrCUCQQWzeUqBE8X4wl3t41DeyhnHpL8=
 github.com/iden3/go-iden3-core v0.0.12/go.mod h1:Ou51YR716WqeBJ3Z4BkGVAJROgSYgfnl4i8x3mfLOeY=
+github.com/iden3/go-iden3-core v0.0.13-0.20220127141208-a481217742c9 h1:JBXRHQ3hcwEa2qycxMRf849rrRXZp1c4Z94sbgNGKKE=
+github.com/iden3/go-iden3-core v0.0.13-0.20220127141208-a481217742c9/go.mod h1:Ou51YR716WqeBJ3Z4BkGVAJROgSYgfnl4i8x3mfLOeY=
 github.com/iden3/go-iden3-crypto v0.0.11 h1:5cFQ/BIqH9gjwe9Z68Hmc5jOTGqmMYnewIaTGCeO+6A=
 github.com/iden3/go-iden3-crypto v0.0.11/go.mod h1:yUBWcXgAUDZxa1PvRl0zIT4Q4/rQO5PacE52Z06i8kw=
 github.com/iden3/go-merkletree-sql v1.0.0-pre8 h1:ywL4VaBnpMGRLQUbSGgXXOjSHIo33KEEiBvrK2AnRa8=
