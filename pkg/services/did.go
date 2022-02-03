@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net"
 
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	core "github.com/iden3/go-iden3-core"
@@ -39,4 +41,35 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, id core.ID) (S
 	}
 
 	return StateVerificationResult{Latest: true, State: state.String()}, nil
+}
+
+// ResolveDomain return did document by domain via DNS.
+func (d *DidDocumentServices) ResolveDomain(ctx context.Context, domain string) (StateVerificationResult, error) {
+	// TODO(illia-korotia): move under interface.
+	records, err := net.LookupTXT(domain)
+	if err != nil {
+		log.Printf("failed resolve domain '%s' to did: %s", domain, err)
+		return StateVerificationResult{}, err
+	}
+
+	if len(records) == 0 {
+		log.Printf("text recornds in domain '%s' not found: %s", domain, err)
+		return StateVerificationResult{}, err
+	}
+
+	var did *core.DID
+	// try to find correct did.
+	for _, v := range records {
+		did, err = core.ParseDID(v)
+		if did != nil && err == nil {
+			break
+		}
+	}
+
+	if did == nil || err != nil {
+		log.Print("text records do not contain did")
+		return StateVerificationResult{}, errors.New("did not found")
+	}
+
+	return d.GetDidDocument(ctx, did.ID)
 }

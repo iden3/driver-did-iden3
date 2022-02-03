@@ -9,7 +9,8 @@ type Handlers struct {
 func (s *Handlers) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", s.DidDocumentHandler.Get)
+	mux.HandleFunc("/1.0/identifiers/", s.DidDocumentHandler.Get)
+	mux.HandleFunc("/dns/", s.DidDocumentHandler.GetByDomain)
 
 	return mux
 }

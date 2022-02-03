@@ -39,3 +39,22 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(state)
 }
+
+// GetByDomain get a did document by domain.
+func (d *DidDocumentHandler) GetByDomain(w http.ResponseWriter, r *http.Request) {
+	rawURL := strings.Split(r.URL.Path, "/")
+	domain := rawURL[len(rawURL)-1]
+
+	state, err := d.DidDocumentService.ResolveDomain(r.Context(), domain)
+	if err != nil {
+		log.Println("invalid get did document:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("state from smart contract:", state)
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(state)
+}
