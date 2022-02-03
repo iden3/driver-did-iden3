@@ -18,6 +18,9 @@ type Config struct {
 		Address string `mapstructure:"address"`
 		URL     string `mapstructure:"url"`
 	} `mapstructure:"ethereum"`
+	Ens struct {
+		Network string `mapstructure:"network"`
+	} `mapstructure:"ens"`
 }
 
 // ReadConfigFromFile parse config file
