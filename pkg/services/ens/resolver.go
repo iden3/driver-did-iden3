@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens/contract/namehash"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens/contract/resolver"
+	"github.com/pkg/errors"
 )
 
 // Resolver has interfaces for getting information about your domain.
@@ -21,7 +22,7 @@ type Resolver struct {
 func NewResolver(eth *ethclient.Client, address, domain string) (*Resolver, error) {
 	contract, err := resolver.NewContract(common.HexToAddress(address), eth)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed connect to resolver")
 	}
 
 	raw, err := namehash.NameHash(domain)
@@ -40,5 +41,6 @@ func NewResolver(eth *ethclient.Client, address, domain string) (*Resolver, erro
 // Text return string that exist in domain txt record.
 // https://eips.ethereum.org/EIPS/eip-634
 func (r *Resolver) Text(key string) (string, error) {
-	return r.contract.Text(nil, r.domain, key)
+	t, err := r.contract.Text(nil, r.domain, key)
+	return t, errors.Wrapf(err, "failed return text from field '%s' for domain '%s'", key, r.domain)
 }

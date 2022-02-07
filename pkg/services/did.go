@@ -2,13 +2,13 @@ package services
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net"
 
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	core "github.com/iden3/go-iden3-core"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -37,8 +37,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, id core.ID) (S
 	// Try get state by did from smart contract.
 	state, err := d.store.GetStateByID(ctx, nil, id.BigInt())
 	if err != nil {
-		log.Printf("failed get did document by id '%s' from store", id.String())
-		return StateVerificationResult{}, err
+		return StateVerificationResult{}, errors.Errorf("failed get did document by id '%s' from store: %s", id.String(), err)
 	}
 
 	// The smart contract was called successfully, but state was not found.
@@ -84,13 +83,11 @@ func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain strin
 func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain string) (StateVerificationResult, error) {
 	res, err := d.ens.Resolver(domain)
 	if err != nil {
-		log.Print("failed create resolver:", err)
 		return StateVerificationResult{}, err
 	}
 
 	did, err := res.Text(ensResolverKey)
 	if err != nil {
-		log.Printf("failed get text for domain '%s': '%s'", domain, err)
 		return StateVerificationResult{}, err
 	}
 

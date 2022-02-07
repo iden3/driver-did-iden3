@@ -28,7 +28,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	state, err := d.DidDocumentService.GetDidDocument(r.Context(), did.ID)
 	if err != nil {
-		log.Println("invalid get did document:", err)
+		log.Printf("invalid get did document: %+v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -47,7 +47,7 @@ func (d *DidDocumentHandler) GetByDNSDomain(w http.ResponseWriter, r *http.Reque
 
 	state, err := d.DidDocumentService.ResolveDNSDomain(r.Context(), domain)
 	if err != nil {
-		log.Println("invalid get did document:", err)
+		log.Printf("invalid get did document: %+v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -65,7 +65,7 @@ func (d *DidDocumentHandler) GetByENSDomain(w http.ResponseWriter, r *http.Reque
 
 	state, err := d.DidDocumentService.ResolveENSDomain(r.Context(), domain)
 	if err != nil {
-		log.Println("invalid get did document:", err)
+		log.Printf("invalid get did document: %+v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
