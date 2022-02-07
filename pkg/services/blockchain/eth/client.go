@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 )
 
 type StateContract struct {
@@ -19,7 +20,7 @@ type StateContract struct {
 func NewStateContract(address string, client *ethclient.Client) (*StateContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(StateABI))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed parse state abi")
 	}
 
 	b := bind.NewBoundContract(common.HexToAddress(address), parsed, client, client, client)
@@ -37,5 +38,5 @@ func (sc *StateContract) GetStateByID(ctx context.Context, opts *bind.CallOpts, 
 	}
 
 	err := sc.bound.Call(opts, outputs, "getState", id)
-	return *output1, err
+	return *output1, errors.Wrap(err, "failed call getState smart contract")
 }

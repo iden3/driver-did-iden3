@@ -10,12 +10,13 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/app/configs"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
+	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 )
 
 func main() {
 	cfg, err := configs.ReadConfigFromFile("driver")
 	if err != nil {
-		log.Fatal("can't read config:", err)
+		log.Fatalf("can't read config: %+v\n", err)
 	}
 
 	e, err := ethclient.Dial(cfg.EthNetwork.URL)
@@ -25,11 +26,20 @@ func main() {
 
 	c, err := eth.NewStateContract(cfg.EthNetwork.Address, e)
 	if err != nil {
-		log.Fatal("can't create contract caller")
+		log.Fatalf("can't create contract caller: %+v\n", err)
 	}
 
-	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{DidDocumentService: services.NewDidDocumentServices(c)}}
+	r, err := ens.NewRegistry(e, ens.ListNetworks[cfg.Ens.Network])
+	if err != nil {
+		log.Fatal("can't create registry:", err)
+	}
 
+	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
+		DidDocumentService: services.NewDidDocumentServices(c, r),
+	},
+	}
+
+	fmt.Printf("config: %+v\n", cfg)
 	err = http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port), mux.Routes())
 	log.Fatal(err)
 }
