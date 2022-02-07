@@ -1,13 +1,12 @@
 package ens
 
 import (
-	"log"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens/contract/namehash"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens/contract/registry"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens/contract/resolver"
+	"github.com/pkg/errors"
 )
 
 type Network string
@@ -35,8 +34,7 @@ func NewRegistry(eth *ethclient.Client, network Network) (*Registry, error) {
 	hexAddr := common.HexToAddress(string(network))
 	contract, err := registry.NewContract(hexAddr, eth)
 	if err != nil {
-		log.Printf("failed create interface to registry '%s': %s", network, err)
-		return nil, err
+		return nil, errors.Wrap(err, "failed connect to registry")
 	}
 
 	return &Registry{
@@ -50,19 +48,16 @@ func NewRegistry(eth *ethclient.Client, network Network) (*Registry, error) {
 func (r *Registry) Resolver(domain string) (*Resolver, error) {
 	hashedDomain, err := namehash.NameHash(domain)
 	if err != nil {
-		log.Printf("failed get hash for domain '%s': %s", domain, err)
-		return nil, err
+		return nil, errors.Wrapf(err, "failed get namehash for domain '%s': %s", domain, err)
 	}
 	resolverAddr, err := r.contract.Resolver(nil, hashedDomain)
 	if err != nil {
-		log.Printf("failed ger resolver for domain '%s': %s", domain, err)
-		return nil, err
+		return nil, errors.Wrapf(err, "failed get resolver for domain '%s': %s", domain, err)
 	}
 
 	resolver, err := resolver.NewContract(resolverAddr, r.eth)
 	if err != nil {
-		log.Printf("failed create registry for contract '%s': %s", domain, err)
-		return nil, err
+		return nil, errors.Wrapf(err, "failed create registry for contract '%s': %s", domain, err)
 	}
 
 	return &Resolver{
