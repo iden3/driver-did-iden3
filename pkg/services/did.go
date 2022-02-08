@@ -107,7 +107,11 @@ func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain strin
 		}
 	}
 
-	if did == nil || err != nil {
+	if err != nil {
+		return nil, err
+	}
+
+	if did == nil {
 		return nil, errors.Errorf("did not found for domain '%s'", domain)
 	}
 
