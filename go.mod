@@ -22,6 +22,7 @@ require (
 	github.com/status-im/keycard-go v0.0.0-20200402102358-957c09536969 // indirect
 	github.com/tklauser/go-sysconf v0.3.6 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
+	github.com/wealdtech/go-ens/v3 v3.5.1 // indirect
 	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 )

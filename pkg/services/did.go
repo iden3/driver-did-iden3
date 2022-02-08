@@ -85,6 +85,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string) (*
 
 // ResolveDNSDomain return did document by domain via DNS.
 func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain string) (*DidResolution, error) {
+	domain = fmt.Sprintf("_did.%s", domain)
 	// TODO(illia-korotia): move under interface.
 	records, err := net.LookupTXT(domain)
 	if err != nil {
@@ -100,7 +101,7 @@ func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain strin
 		v   string
 	)
 	// try to find correct did.
-	for _, v := range records {
+	for _, v = range records {
 		did, err = core.ParseDID(v)
 		if did != nil && err == nil {
 			break
