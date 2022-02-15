@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net"
 
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
@@ -14,6 +14,36 @@ import (
 const (
 	ensResolverKey = "description"
 )
+
+// DidResolution representation of did document.
+// TODO(illia-korotia): create package like 'Did builder'.
+type DidResolution struct {
+	Context     string `json:"@context"`
+	DidDocument struct {
+		Context []string `json:"@context"`
+		ID      string   `json:"id"`
+	} `json:"didDocument"`
+	// should exist in responses, but can be empty.
+	// https://www.w3.org/TR/did-core/#did-resolution
+	DidResolutionMetadata struct {
+	} `json:"didResolutionMetadata"`
+	DidDocumentMetadata StateVerificationResult `json:"didDocumentMetadata"`
+}
+
+// NewDidResolution create did document with default values.
+func NewDidResolution(did *core.DID, state StateVerificationResult) *DidResolution {
+	return &DidResolution{
+		Context: "https://w3id.org/did-resolution/v1",
+		DidDocument: struct {
+			Context []string `json:"@context"`
+			ID      string   `json:"id"`
+		}{
+			Context: []string{"https://www.w3.org/ns/did/v1"},
+			ID:      did.String(),
+		},
+		DidDocumentMetadata: state,
+	}
+}
 
 // StateVerificationResult can be the state verification result.
 type StateVerificationResult struct {
@@ -33,36 +63,42 @@ func NewDidDocumentServices(c *eth.StateContract, registry *ens.Registry) *DidDo
 }
 
 // GetDidDocument return did document by identifier.
-func (d *DidDocumentServices) GetDidDocument(ctx context.Context, id core.ID) (StateVerificationResult, error) {
-	// Try get state by did from smart contract.
-	state, err := d.store.GetStateByID(ctx, nil, id.BigInt())
+func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string) (*DidResolution, error) {
+	rawDID, err := core.ParseDID(did)
 	if err != nil {
-		return StateVerificationResult{}, errors.Errorf("failed get did document by id '%s' from store: %s", id.String(), err)
+		return nil, err
+	}
+
+	// Try get state by did from smart contract.
+	state, err := d.store.GetStateByID(ctx, nil, rawDID.ID.BigInt())
+	if err != nil {
+		return nil, fmt.Errorf("failed get did document by id '%s' from store: %s", rawDID.ID.String(), err)
 	}
 
 	// The smart contract was called successfully, but state was not found.
 	if state.Int64() == 0 {
-		return StateVerificationResult{}, nil
+		return NewDidResolution(rawDID, StateVerificationResult{}), nil
 	}
 
-	return StateVerificationResult{Latest: true, State: state.String()}, nil
+	return NewDidResolution(rawDID, StateVerificationResult{Latest: true, State: state.String()}), nil
 }
 
 // ResolveDNSDomain return did document by domain via DNS.
-func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain string) (StateVerificationResult, error) {
+func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain string) (*DidResolution, error) {
 	// TODO(illia-korotia): move under interface.
 	records, err := net.LookupTXT(domain)
 	if err != nil {
-		log.Printf("failed resolve domain '%s' to did: %s", domain, err)
-		return StateVerificationResult{}, err
+		return nil, errors.Wrapf(err, "failed lookup domain '%s'", domain)
 	}
 
 	if len(records) == 0 {
-		log.Printf("text recornds in domain '%s' not found: %s", domain, err)
-		return StateVerificationResult{}, err
+		return nil, errors.Errorf("domain '%s' doesn't contain text fields", domain)
 	}
 
-	var did *core.DID
+	var (
+		did *core.DID
+		v   string
+	)
 	// try to find correct did.
 	for _, v := range records {
 		did, err = core.ParseDID(v)
@@ -71,31 +107,28 @@ func (d *DidDocumentServices) ResolveDNSDomain(ctx context.Context, domain strin
 		}
 	}
 
-	if did == nil || err != nil {
-		log.Print("text records do not contain did")
-		return StateVerificationResult{}, errors.New("did not found")
+	if err != nil {
+		return nil, err
 	}
 
-	return d.GetDidDocument(ctx, did.ID)
+	if did == nil {
+		return nil, errors.Errorf("did not found for domain '%s'", domain)
+	}
+
+	return d.GetDidDocument(ctx, v)
 }
 
 // ResolveENSDomain return did document via ENS resolver.
-func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain string) (StateVerificationResult, error) {
+func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain string) (*DidResolution, error) {
 	res, err := d.ens.Resolver(domain)
 	if err != nil {
-		return StateVerificationResult{}, err
+		return nil, err
 	}
 
 	did, err := res.Text(ensResolverKey)
 	if err != nil {
-		return StateVerificationResult{}, err
+		return nil, err
 	}
 
-	rawDID, err := core.ParseDID(did)
-	if err != nil {
-		log.Print("invalid did format", err)
-		return StateVerificationResult{}, err
-	}
-
-	return d.GetDidDocument(ctx, rawDID.ID)
+	return d.GetDidDocument(ctx, did)
 }
