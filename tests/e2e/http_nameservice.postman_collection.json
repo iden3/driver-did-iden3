@@ -1,0 +1,148 @@
+{
+	"info": {
+		"_postman_id": "719afe1e-50de-445e-8f61-29e33b584ce0",
+		"name": "Nameservice",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Resolve ENS to did document.",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Resolve ENS to did document\", () => {",
+							"    // check status code.",
+							"    pm.response.to.have.status(200);",
+							"    // check not empty body.",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.not.be.empty;",
+							"    pm.expect(jsonData['@context']).to.eql('https://w3id.org/did-resolution/v1');",
+							"",
+							"    pm.expect(jsonData.didDocument).to.not.be.empty;",
+							"    pm.expect(jsonData.didResolutionMetadata).to.be.empty;",
+							"    pm.expect(jsonData.didDocumentMetadata).to.not.be.empty;",
+							"",
+							"        // check response from smart context",
+							"    pm.expect(jsonData.didDocumentMetadata.state).to.not.be.empty;",
+							"    pm.expect(jsonData.didDocumentMetadata.latest).to.be.true;",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8003/ens/iden3.eth",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8003",
+					"path": [
+						"ens",
+						"iden3.eth"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve DNS to did document.",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Resolve DNS to did document\", () => {",
+							"    // check status code.",
+							"    pm.response.to.have.status(200);",
+							"    // check not empty body.",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.not.be.empty;",
+							"    pm.expect(jsonData['@context']).to.eql('https://w3id.org/did-resolution/v1');",
+							"",
+							"    pm.expect(jsonData.didDocument).to.not.be.empty;",
+							"    pm.expect(jsonData.didResolutionMetadata).to.be.empty;",
+							"    pm.expect(jsonData.didDocumentMetadata).to.not.be.empty;",
+							"",
+							"    // check response from smart context",
+							"    pm.expect(jsonData.didDocumentMetadata.state).to.not.be.empty;",
+							"    pm.expect(jsonData.didDocumentMetadata.latest).to.be.true;",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8003/dns/demonsh.dev",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8003",
+					"path": [
+						"dns",
+						"demonsh.dev"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve DID to did document.",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Resolve DNS to did document\", () => {",
+							"    // check status code.",
+							"    pm.response.to.have.status(200);",
+							"    // check not empty body.",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.not.be.empty;",
+							"    pm.expect(jsonData['@context']).to.eql('https://w3id.org/did-resolution/v1');",
+							"",
+							"    pm.expect(jsonData.didDocument).to.not.be.empty;",
+							"    pm.expect(jsonData.didResolutionMetadata).to.be.empty;",
+							"    pm.expect(jsonData.didDocumentMetadata).to.not.be.empty;",
+							"",
+							"    // check response from smart context",
+							"    pm.expect(jsonData.didDocumentMetadata.state).to.not.be.empty;",
+							"    pm.expect(jsonData.didDocumentMetadata.latest).to.be.true;",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8003/1.0/identifiers/did:iden3:eth:ropsten:11CX7U1dj8Fp9Vazr6QZTobKEUtYbg89DjmvkRVzd4",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8003",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:eth:ropsten:11CX7U1dj8Fp9Vazr6QZTobKEUtYbg89DjmvkRVzd4"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

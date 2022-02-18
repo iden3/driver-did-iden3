@@ -20,6 +20,7 @@ type Config struct {
 	} `mapstructure:"ethereum"`
 	Ens struct {
 		Network string `mapstructure:"network"`
+		Owner   string `mapstructure:"owner"`
 	} `mapstructure:"ens"`
 }
 
