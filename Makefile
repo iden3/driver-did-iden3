@@ -5,3 +5,6 @@ e2e: register-domain
 
 register-domain:
 	go run cmd/registrar/main.go
+
+lint:
+	 golangci-lint --config .golangci.yml run

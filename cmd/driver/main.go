@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/driver-did-iden3/pkg/app"
@@ -14,32 +15,43 @@ import (
 )
 
 func main() {
-	cfg, err := configs.ReadConfigFromFile("driver")
+	cfg, err := configs.ReadConfigFromFile()
 	if err != nil {
 		log.Fatalf("can't read config: %+v\n", err)
 	}
+	fmt.Printf("config: %+v", cfg)
 
-	e, err := ethclient.Dial(cfg.EthNetwork.URL)
-	if err != nil {
-		log.Fatal("can't connect to eth network:", err)
+	var r *ens.Registry
+	if cfg.Ens.Network != "" {
+		e, err := ethclient.Dial(string(cfg.Ens.URL))
+		if err != nil {
+			log.Fatal("can't connect to eth network:", err)
+		}
+		r, err = ens.NewRegistry(e, ens.ListNetworks[string(cfg.Ens.Network)])
+		if err != nil {
+			log.Fatal("can't create registry:", err)
+		}
 	}
 
-	c, err := eth.NewStateContract(cfg.EthNetwork.Address, e)
-	if err != nil {
-		log.Fatalf("can't create contract caller: %+v\n", err)
-	}
-
-	r, err := ens.NewRegistry(e, ens.ListNetworks[cfg.Ens.Network])
-	if err != nil {
-		log.Fatal("can't create registry:", err)
+	resolvers := services.NewChainResolvers()
+	for prefix, settings := range cfg.Resolvers {
+		resolver, err := eth.NewResolver(string(settings.NetworkURL), string(settings.ContractAddress))
+		if err != nil {
+			log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
+		}
+		resolvers.Add(prefix, resolver)
 	}
 
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(c, r),
+		DidDocumentService: services.NewDidDocumentServices(resolvers, r),
 	},
 	}
 
-	fmt.Printf("config: %+v\n", cfg)
-	err = http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port), mux.Routes())
+	server := http.Server{
+		Addr:              fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
+		Handler:           mux.Routes(),
+		ReadHeaderTimeout: time.Second,
+	}
+	err = server.ListenAndServe()
 	log.Fatal(err)
 }
