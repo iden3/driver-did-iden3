@@ -45,7 +45,7 @@ jobs:
           npm install -g newman && \
           newman run tests/e2e/http_nameservice.postman_collection.json \
           -g ./tests/e2e/dev_env.json \
-          --global-var issuer_server=${{ secrets.ISSUER_URL }}
+          --global-var issuer_server=${{ secrets.ISSUER_URL }} \
           --bail --verbose
 
       - name: e2e tests finished
