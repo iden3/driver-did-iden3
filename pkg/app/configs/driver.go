@@ -1,71 +1,62 @@
 package configs
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
-type Secret string
+const defaultPathToResolverSettings = "./resolvers.settings.yaml"
 
-func (s Secret) String() string {
-	if len(s) == 0 {
-		return ""
-	}
-	return "***"
+// ResolverSettings represent settings for resolver.
+type ResolverSettings map[string]map[string]struct {
+	ContractAddress string `yaml:"contractAddress"`
+	NetworkURL      string `yaml:"networkURL"`
 }
 
-func (s Secret) MarshalJSON() ([]byte, error) {
-	return []byte(`"***"`), nil
-}
-
-// Config structure represent yaml config for did driver
+// Config structure represent yaml config for did driver.
 type Config struct {
 	Server struct {
 		Port int    `envconfig:"PORT" default:"8080"`
 		Host string `envconfig:"HOST" default:"localhost"`
 	}
-	// Example of envs:
-	// export RESOLVERS= polygon:mumbai={"contractAddress":"0xf67...","url":"https://polygon-mumbai..."}
-	Resolvers Resolvers `envconfig:"RESOLVERS" required:"true"`
-	Ens       struct {
-		URL     Secret `envconfig:"ENS_URL"`
-		Network Secret `envconfig:"ENS_NETWORK"`
-		Owner   Secret `envconfig:"ENS_OWNER"`
+	Ens struct {
+		URL     string `envconfig:"ENS_URL"`
+		Network string `envconfig:"ENS_NETWORK"`
+		Owner   string `envconfig:"ENS_OWNER"`
 	}
 }
 
-type resolverSettings struct {
-	ContractAddress Secret `json:"contractAddress"`
-	NetworkURL      Secret `json:"url"`
-}
-
-type Resolvers map[string]resolverSettings
-
-func (sd *Resolvers) Decode(value string) error {
-	resolvers := map[string]resolverSettings{}
-	pairs := strings.Split(value, ";")
-	for _, pair := range pairs {
-		settings := resolverSettings{}
-		kvpair := strings.Split(pair, "=")
-		if len(kvpair) != 2 {
-			return fmt.Errorf("invalid map item: %q", pair)
-		}
-		err := json.Unmarshal([]byte(kvpair[1]), &settings)
-		if err != nil {
-			return fmt.Errorf("invalid map json: %w", err)
-		}
-		resolvers[kvpair[0]] = settings
-	}
-	*sd = resolvers
-	return nil
-}
-
-// ReadConfigFromFile parse config file
+// ReadConfigFromFile parse config file.
 func ReadConfigFromFile() (*Config, error) {
 	cfg := &Config{}
 	err := envconfig.Process("", cfg)
 	return cfg, err
+}
+
+// ParseResolversSettings parse yaml file with resolver settings.
+func ParseResolversSettings(path string) (ResolverSettings, error) {
+	if path == "" {
+		path = defaultPathToResolverSettings
+	}
+	f, err := os.Open(filepath.Clean(path))
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Println("failed to close setting file:", err)
+		}
+	}()
+
+	settings := ResolverSettings{}
+	if err := yaml.NewDecoder(f).Decode(&settings); err != nil {
+		return nil, errors.Errorf("invalid yaml file: %v", settings)
+	}
+
+	return settings, nil
 }

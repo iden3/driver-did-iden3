@@ -10,6 +10,7 @@ func (s *Handlers) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/1.0/identifiers/", s.DidDocumentHandler.Get)
+	mux.HandleFunc("/1.0/gist", s.DidDocumentHandler.GetGist)
 	mux.HandleFunc("/dns/", s.DidDocumentHandler.GetByDNSDomain)
 	mux.HandleFunc("/ens/", s.DidDocumentHandler.GetByENSDomain)
 

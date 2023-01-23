@@ -1,13 +1,12 @@
 ##
 ## Build did driver
 ##
-FROM golang:1.16-alpine as base
+FROM golang:1.18-alpine as base
 
 WORKDIR /build
 
 RUN apk add --no-cache --update git
 
-#COPY . .
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY go.mod ./
@@ -19,11 +18,14 @@ RUN CGO_ENABLED=0 go build -o ./driver ./cmd/driver/main.go
 # Build an driver image
 FROM scratch
 
-COPY --from=base /build/driver       /app/driver
-COPY ./configs    /app/configs
-COPY --from=base  /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY ./resolvers.settings.yaml /app/resolvers.settings.yaml
+COPY --from=base /build/driver /app/driver
+COPY --from=base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 WORKDIR /app
 
+ENV HOST=0.0.0.0
+ENV PORT=8080
+
 # Command to run
-ENTRYPOINT ["/app/driver"]
+ENTRYPOINT ["/app/driver", "/app/resolvers.settings.yaml"]

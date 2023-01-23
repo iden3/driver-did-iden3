@@ -20,4 +20,4 @@
 # Envs
 configs/driver.yaml
 .env*
-
+resolvers.settings.yaml

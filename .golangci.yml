@@ -73,11 +73,14 @@ issues:
   exclude:
     - 'shadow: declaration of "err" shadows declaration at'
   exclude-rules:
-#    - Fix and remove
+    - text: "re-assignment to `err` can be replaced with"
+      linters:
+        - gocritic
+      # Fix and remove
     - text: "at least one file in a package should have a package comment"
       linters:
         - stylecheck
-  #    - Fix and remove
+      # Fix and remove
     - text: "should have a package comment, unless it's in another file for this package"
       linters:
         - revive

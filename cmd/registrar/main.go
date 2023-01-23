@@ -39,12 +39,12 @@ func main() {
 		log.Fatalf("can't read config: %+v\n", err)
 	}
 
-	e, err := ethclient.Dial(string(cfg.Ens.URL))
+	e, err := ethclient.Dial(cfg.Ens.URL)
 	if err != nil {
 		log.Fatal("can't connect to eth network:", err)
 	}
 
-	privateKey, err := crypto.HexToECDSA(string(cfg.Ens.Owner))
+	privateKey, err := crypto.HexToECDSA(cfg.Ens.Owner)
 	if err != nil {
 		log.Fatal("failed parse private key:", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -19,31 +20,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't read config: %+v\n", err)
 	}
-	fmt.Printf("config: %+v", cfg)
 
 	var r *ens.Registry
-	if cfg.Ens.Network != "" {
-		e, err := ethclient.Dial(string(cfg.Ens.URL))
+	if cfg.Ens.URL != "" && cfg.Ens.Network != "" {
+		e, err := ethclient.Dial(cfg.Ens.URL)
 		if err != nil {
 			log.Fatal("can't connect to eth network:", err)
 		}
-		r, err = ens.NewRegistry(e, ens.ListNetworks[string(cfg.Ens.Network)])
+		r, err = ens.NewRegistry(e, ens.ListNetworks[cfg.Ens.Network])
 		if err != nil {
 			log.Fatal("can't create registry:", err)
 		}
 	}
 
-	resolvers := services.NewChainResolvers()
-	for prefix, settings := range cfg.Resolvers {
-		resolver, err := eth.NewResolver(string(settings.NetworkURL), string(settings.ContractAddress))
-		if err != nil {
-			log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
-		}
-		resolvers.Add(prefix, resolver)
-	}
-
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(resolvers, r),
+		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r),
 	},
 	}
 
@@ -52,6 +43,31 @@ func main() {
 		Handler:           mux.Routes(),
 		ReadHeaderTimeout: time.Second,
 	}
+	log.Printf("HTTP server start on '%s:%d'\n", cfg.Server.Host, cfg.Server.Port)
 	err = server.ListenAndServe()
 	log.Fatal(err)
+}
+
+func initResolvers() *services.ResolverRegistry {
+	var path string
+	if len(os.Args) > 2 {
+		path = os.Args[1]
+	}
+	rs, err := configs.ParseResolversSettings(path)
+	if err != nil {
+		log.Fatal("can't read resolver settings:", err)
+	}
+	resolvers := services.NewChainResolvers()
+	for chainName, chainSettings := range rs {
+		for networkName, networkSettings := range chainSettings {
+			prefix := fmt.Sprintf("%s:%s", chainName, networkName)
+			resolver, err := eth.NewResolver(networkSettings.NetworkURL, networkSettings.ContractAddress)
+			if err != nil {
+				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
+			}
+			resolvers.Add(prefix, resolver)
+		}
+	}
+
+	return resolvers
 }
