@@ -7,7 +7,7 @@ on:
 jobs:
   run_e2e:
     env:
-      ETHEREUM_CONTRACT_ADDRESS: "0xf6781AD281d9892Df285cf86dF4F6eBec2042d71"
+      ETHEREUM_CONTRACT_ADDRESS: "0xEA9aF2088B4a9770fC32A12fD42E61BDD317E655"
 
     runs-on: ubuntu-20.04
     steps:
