@@ -37,6 +37,18 @@ jobs:
       - name: iden3-did-driver
         run: docker run -p 8080:8080 -d --network host --name iden3-did-driver iden3-did-driver:develop
 
+      - name: logs
+        run: docker logs iden3-did-driver
+
+      - name: Readiness probe for issuer service
+        run: >
+          curl --connect-timeout 5
+          --max-time 10
+          --retry 10
+          --retry-max-time 120
+          --retry-connrefused
+          'http://localhost:8080/status'
+
       # TESTS
       - name: Run Newman e2e
         id: e2e
@@ -52,4 +64,3 @@ jobs:
         if: steps.e2e.outcome != 'success'
         run: exit 1
       # / TESTS
-
