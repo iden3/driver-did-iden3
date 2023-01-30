@@ -99,7 +99,7 @@ func (d *DidDocumentHandler) GetGist(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"error":"resolver for '%s:%s' network not found"}`, chain, networkid)
 		return
 	} else if err != nil {
-		log.Printf("failed get info about latest gist from network '%s%s': %v\n", chain, networkid, err)
+		log.Printf("failed get info about latest gist from network '%s:%s': %v\n", chain, networkid, err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

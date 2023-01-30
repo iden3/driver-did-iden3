@@ -39,7 +39,7 @@ func main() {
 		log.Fatalf("can't read config: %+v\n", err)
 	}
 
-	e, err := ethclient.Dial(cfg.Ens.URL)
+	e, err := ethclient.Dial(cfg.Ens.EthNodeURL)
 	if err != nil {
 		log.Fatal("can't connect to eth network:", err)
 	}

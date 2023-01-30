@@ -25,9 +25,9 @@ type Config struct {
 		Host string `envconfig:"HOST" default:"localhost"`
 	}
 	Ens struct {
-		URL     string `envconfig:"ENS_URL"`
-		Network string `envconfig:"ENS_NETWORK"`
-		Owner   string `envconfig:"ENS_OWNER"`
+		EthNodeURL string `envconfig:"ETH_NODE_URL"`
+		Network    string `envconfig:"ENS_NETWORK"`
+		Owner      string `envconfig:"ENS_OWNER"`
 	}
 }
 

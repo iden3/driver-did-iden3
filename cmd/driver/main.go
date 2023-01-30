@@ -22,8 +22,8 @@ func main() {
 	}
 
 	var r *ens.Registry
-	if cfg.Ens.URL != "" && cfg.Ens.Network != "" {
-		e, err := ethclient.Dial(cfg.Ens.URL)
+	if cfg.Ens.EthNodeURL != "" && cfg.Ens.Network != "" {
+		e, err := ethclient.Dial(cfg.Ens.EthNodeURL)
 		if err != nil {
 			log.Fatal("can't connect to eth network:", err)
 		}
@@ -45,7 +45,9 @@ func main() {
 	}
 	log.Printf("HTTP server start on '%s:%d'\n", cfg.Server.Host, cfg.Server.Port)
 	err = server.ListenAndServe()
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal("not expected exit from http listener:", err)
+	}
 }
 
 func initResolvers() *services.ResolverRegistry {
