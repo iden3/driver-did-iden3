@@ -34,12 +34,12 @@ func main() {
 		domain = defaultDomain
 	}
 
-	cfg, err := configs.ReadConfigFromFile("driver")
+	cfg, err := configs.ReadConfigFromFile()
 	if err != nil {
 		log.Fatalf("can't read config: %+v\n", err)
 	}
 
-	e, err := ethclient.Dial(cfg.EthNetwork.URL)
+	e, err := ethclient.Dial(cfg.Ens.EthNodeURL)
 	if err != nil {
 		log.Fatal("can't connect to eth network:", err)
 	}

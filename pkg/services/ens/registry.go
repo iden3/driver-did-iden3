@@ -55,14 +55,14 @@ func (r *Registry) Resolver(domain string) (*Resolver, error) {
 		return nil, errors.Wrapf(err, "failed get resolver for domain '%s': %s", domain, err)
 	}
 
-	resolver, err := resolver.NewContract(resolverAddr, r.eth)
+	contract, err := resolver.NewContract(resolverAddr, r.eth)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed create registry for contract '%s': %s", domain, err)
 	}
 
 	return &Resolver{
 		client:   r.eth,
-		contract: resolver,
+		contract: contract,
 		address:  resolverAddr,
 		domain:   hashedDomain,
 	}, nil
