@@ -18,7 +18,7 @@ const (
 const (
 	defaultContext       = "https://w3id.org/did-resolution/v1"
 	defaultDidDocContext = "https://www.w3.org/ns/did/v1"
-	iden3Context         = "https://gist.githubusercontent.com/ilya-korotya/a32078cb5c475452657b105ceb581728/raw/98fcd22b9bfb0c885e3be0c8019af615b4ef1010/auth.json-ld"
+	iden3Context         = "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/core/jsonld/auth.jsonld"
 	defaultContentType   = "application/did+ld+json"
 )
 
