@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/iden3/contracts-abi/state/go/abi"
 	"github.com/iden3/driver-did-iden3/pkg/services"
-	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth/contract"
 	cm "github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth/contract/mock"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
@@ -30,7 +30,7 @@ func TestResolveGist_Success(t *testing.T) {
 				GistRoot: big.NewInt(1),
 			},
 			contractMock: func(c *cm.MockStateContract) {
-				res := contract.SmtRootInfo{Root: big.NewInt(2)}
+				res := abi.IStateGistRootInfo{Root: big.NewInt(2)}
 				c.EXPECT().GetGISTRootInfo(gomock.Any(), big.NewInt(1)).Return(res, nil)
 			},
 			expectedGistInfo: &services.GistInfo{
@@ -43,7 +43,7 @@ func TestResolveGist_Success(t *testing.T) {
 			contractMock: func(c *cm.MockStateContract) {
 				latestRoot := big.NewInt(1)
 				c.EXPECT().GetGISTRoot(gomock.Any()).Return(latestRoot, nil)
-				res := contract.SmtRootInfo{Root: big.NewInt(2)}
+				res := abi.IStateGistRootInfo{Root: big.NewInt(2)}
 				c.EXPECT().GetGISTRootInfo(gomock.Any(), latestRoot).Return(res, nil)
 			},
 			expectedGistInfo: &services.GistInfo{
@@ -83,16 +83,16 @@ func TestResolve_Success(t *testing.T) {
 			},
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
-				proof := contract.SmtProof{
+				proof := abi.IStateGistProof{
 					Root:      big.NewInt(4),
 					Existence: true,
 					Value:     big.NewInt(5),
 				}
 				c.EXPECT().GetGISTProofByRoot(gomock.Any(), userDID.ID.BigInt(), big.NewInt(1)).Return(proof, nil)
-				gistInfo := contract.SmtRootInfo{Root: big.NewInt(555)}
+				gistInfo := abi.IStateGistRootInfo{Root: big.NewInt(555)}
 				c.EXPECT().GetGISTRootInfo(gomock.Any(), big.NewInt(4)).Return(gistInfo, nil)
-				stateInfo := contract.StateV2StateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(444)}
-				c.EXPECT().GetStateInfoByState(gomock.Any(), big.NewInt(5)).Return(stateInfo, nil)
+				stateInfo := abi.IStateStateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(444)}
+				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), gomock.Any(), big.NewInt(5)).Return(stateInfo, nil)
 			},
 			expectedIdentityState: services.IdentityState{
 				StateInfo: &services.StateInfo{
@@ -111,8 +111,8 @@ func TestResolve_Success(t *testing.T) {
 			},
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
-				res := contract.StateV2StateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(555)}
-				c.EXPECT().GetStateInfoByState(gomock.Any(), big.NewInt(1)).Return(res, nil)
+				res := abi.IStateStateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(555)}
+				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), gomock.Any(), big.NewInt(1)).Return(res, nil)
 			},
 			expectedIdentityState: services.IdentityState{
 				StateInfo: &services.StateInfo{
@@ -129,9 +129,9 @@ func TestResolve_Success(t *testing.T) {
 			contractMock: func(c *cm.MockStateContract) {
 				latestGist := big.NewInt(100)
 				c.EXPECT().GetGISTRoot(gomock.Any()).Return(latestGist, nil)
-				latestGistInfo := contract.SmtRootInfo{Root: big.NewInt(400)}
+				latestGistInfo := abi.IStateGistRootInfo{Root: big.NewInt(400)}
 				c.EXPECT().GetGISTRootInfo(gomock.Any(), latestGist).Return(latestGistInfo, nil)
-				stateInfo := contract.StateV2StateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(555)}
+				stateInfo := abi.IStateStateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(555)}
 				c.EXPECT().GetStateInfoById(gomock.Any(), userDID.ID.BigInt()).Return(stateInfo, nil)
 			},
 			expectedIdentityState: services.IdentityState{
