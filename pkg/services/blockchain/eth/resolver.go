@@ -21,7 +21,7 @@ type StateContract interface {
 	GetGISTProofByRoot(opts *bind.CallOpts, id *big.Int, root *big.Int) (contract.SmtProof, error)
 
 	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (contract.StateV2StateInfo, error)
-	GetStateInfoByState(opts *bind.CallOpts, state *big.Int) (contract.StateV2StateInfo, error)
+	GetStateInfoByIdAndState(opts *bind.CallOpts, id *big.Int, state *big.Int) (contract.StateV2StateInfo, error)
 }
 
 type Resolver struct {
@@ -170,7 +170,7 @@ func (r *Resolver) resolveState(
 	id core.ID,
 	state *big.Int,
 ) (*contract.StateV2StateInfo, error) {
-	stateInfo, err := r.state.GetStateInfoByState(&bind.CallOpts{Context: ctx}, state)
+	stateInfo, err := r.state.GetStateInfoByIdAndState(&bind.CallOpts{Context: ctx}, id.BigInt(), state)
 	if err = notFoundErr(err); err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (r *Resolver) resolveStateByGistRoot(
 		return nil, &gistInfo, nil
 	}
 
-	stateInfo, err := r.state.GetStateInfoByState(&bind.CallOpts{Context: ctx}, proof.Value)
+	stateInfo, err := r.state.GetStateInfoByIdAndState(&bind.CallOpts{Context: ctx}, id.BigInt(), proof.Value)
 	if err = notFoundErr(err); err != nil {
 		return nil, &gistInfo, err
 	}

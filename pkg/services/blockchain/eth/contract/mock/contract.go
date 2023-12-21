@@ -96,17 +96,17 @@ func (mr *MockStateContractMockRecorder) GetStateInfoById(arg0, arg1 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateInfoById", reflect.TypeOf((*MockStateContract)(nil).GetStateInfoById), arg0, arg1)
 }
 
-// GetStateInfoByState mocks base method.
-func (m *MockStateContract) GetStateInfoByState(arg0 *bind.CallOpts, arg1 *big.Int) (contract.StateV2StateInfo, error) {
+// GetStateInfoByIdAndState mocks base method.
+func (m *MockStateContract) GetStateInfoByIdAndState(arg0 *bind.CallOpts, arg1 *big.Int, arg2 *big.Int) (contract.StateV2StateInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStateInfoByState", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetStateInfoByIdAndState", arg0, arg1, arg2)
 	ret0, _ := ret[0].(contract.StateV2StateInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetStateInfoByState indicates an expected call of GetStateInfoByState.
-func (mr *MockStateContractMockRecorder) GetStateInfoByState(arg0, arg1 interface{}) *gomock.Call {
+// GetStateInfoByIdAndState indicates an expected call of GetStateInfoByIdAndState.
+func (mr *MockStateContractMockRecorder) GetStateInfoByIdAndState(arg0, arg1 interface{}, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateInfoByState", reflect.TypeOf((*MockStateContract)(nil).GetStateInfoByState), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateInfoByIdAndState", reflect.TypeOf((*MockStateContract)(nil).GetStateInfoByIdAndState), arg0, arg1, arg2)
 }
