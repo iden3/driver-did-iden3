@@ -92,7 +92,7 @@ func TestResolve_Success(t *testing.T) {
 				gistInfo := contract.SmtRootInfo{Root: big.NewInt(555)}
 				c.EXPECT().GetGISTRootInfo(gomock.Any(), big.NewInt(4)).Return(gistInfo, nil)
 				stateInfo := contract.StateV2StateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(444)}
-				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), big.NewInt(5), big.NewInt(5)).Return(stateInfo, nil)
+				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), userDID.ID.BigInt(), big.NewInt(5)).Return(stateInfo, nil)
 			},
 			expectedIdentityState: services.IdentityState{
 				StateInfo: &services.StateInfo{
@@ -112,7 +112,7 @@ func TestResolve_Success(t *testing.T) {
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
 				res := contract.StateV2StateInfo{Id: userDID.ID.BigInt(), State: big.NewInt(555)}
-				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), big.NewInt(1), big.NewInt((5))).Return(res, nil)
+				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), userDID.ID.BigInt(), big.NewInt((1))).Return(res, nil)
 			},
 			expectedIdentityState: services.IdentityState{
 				StateInfo: &services.StateInfo{
