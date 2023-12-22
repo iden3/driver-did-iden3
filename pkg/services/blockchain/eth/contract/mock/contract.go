@@ -10,7 +10,7 @@ import (
 
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gomock "github.com/golang/mock/gomock"
-	contract "github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth/contract"
+	contract "github.com/iden3/contracts-abi/state/go/abi"
 )
 
 // MockStateContract is a mock of StateContract interface.
@@ -37,10 +37,10 @@ func (m *MockStateContract) EXPECT() *MockStateContractMockRecorder {
 }
 
 // GetGISTProofByRoot mocks base method.
-func (m *MockStateContract) GetGISTProofByRoot(arg0 *bind.CallOpts, arg1, arg2 *big.Int) (contract.SmtProof, error) {
+func (m *MockStateContract) GetGISTProofByRoot(arg0 *bind.CallOpts, arg1, arg2 *big.Int) (contract.IStateGistProof, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGISTProofByRoot", arg0, arg1, arg2)
-	ret0, _ := ret[0].(contract.SmtProof)
+	ret0, _ := ret[0].(contract.IStateGistProof)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -67,10 +67,10 @@ func (mr *MockStateContractMockRecorder) GetGISTRoot(arg0 interface{}) *gomock.C
 }
 
 // GetGISTRootInfo mocks base method.
-func (m *MockStateContract) GetGISTRootInfo(arg0 *bind.CallOpts, arg1 *big.Int) (contract.SmtRootInfo, error) {
+func (m *MockStateContract) GetGISTRootInfo(arg0 *bind.CallOpts, arg1 *big.Int) (contract.IStateGistRootInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGISTRootInfo", arg0, arg1)
-	ret0, _ := ret[0].(contract.SmtRootInfo)
+	ret0, _ := ret[0].(contract.IStateGistRootInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -82,10 +82,10 @@ func (mr *MockStateContractMockRecorder) GetGISTRootInfo(arg0, arg1 interface{})
 }
 
 // GetStateInfoById mocks base method.
-func (m *MockStateContract) GetStateInfoById(arg0 *bind.CallOpts, arg1 *big.Int) (contract.StateV2StateInfo, error) {
+func (m *MockStateContract) GetStateInfoById(arg0 *bind.CallOpts, arg1 *big.Int) (contract.IStateStateInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStateInfoById", arg0, arg1)
-	ret0, _ := ret[0].(contract.StateV2StateInfo)
+	ret0, _ := ret[0].(contract.IStateStateInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -97,10 +97,10 @@ func (mr *MockStateContractMockRecorder) GetStateInfoById(arg0, arg1 interface{}
 }
 
 // GetStateInfoByIdAndState mocks base method.
-func (m *MockStateContract) GetStateInfoByIdAndState(arg0 *bind.CallOpts, arg1 *big.Int, arg2 *big.Int) (contract.StateV2StateInfo, error) {
+func (m *MockStateContract) GetStateInfoByIdAndState(arg0 *bind.CallOpts, arg1 *big.Int, arg2 *big.Int) (contract.IStateStateInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStateInfoByIdAndState", arg0, arg1, arg2)
-	ret0, _ := ret[0].(contract.StateV2StateInfo)
+	ret0, _ := ret[0].(contract.IStateStateInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -9,19 +9,19 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	contract "github.com/iden3/contracts-abi/state/go/abi"
 	"github.com/iden3/driver-did-iden3/pkg/services"
-	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth/contract"
 	core "github.com/iden3/go-iden3-core"
 )
 
 //go:generate mockgen -destination=contract/mock/contract.go . StateContract
 type StateContract interface {
 	GetGISTRoot(opts *bind.CallOpts) (*big.Int, error)
-	GetGISTRootInfo(opts *bind.CallOpts, root *big.Int) (contract.SmtRootInfo, error)
-	GetGISTProofByRoot(opts *bind.CallOpts, id *big.Int, root *big.Int) (contract.SmtProof, error)
+	GetGISTRootInfo(opts *bind.CallOpts, root *big.Int) (contract.IStateGistRootInfo, error)
+	GetGISTProofByRoot(opts *bind.CallOpts, id *big.Int, root *big.Int) (contract.IStateGistProof, error)
 
-	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (contract.StateV2StateInfo, error)
-	GetStateInfoByIdAndState(opts *bind.CallOpts, id *big.Int, state *big.Int) (contract.StateV2StateInfo, error)
+	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (contract.IStateStateInfo, error)
+	GetStateInfoByIdAndState(opts *bind.CallOpts, id *big.Int, state *big.Int) (contract.IStateStateInfo, error)
 }
 
 type Resolver struct {
@@ -104,8 +104,8 @@ func (r *Resolver) Resolve(
 	}
 
 	var (
-		stateInfo *contract.StateV2StateInfo
-		gistInfo  *contract.SmtRootInfo
+		stateInfo *contract.IStateStateInfo
+		gistInfo  *contract.IStateGistRootInfo
 		err       error
 	)
 
@@ -147,7 +147,7 @@ func (r *Resolver) Resolve(
 func (r *Resolver) resolveLatest(
 	ctx context.Context,
 	id core.ID,
-) (*contract.StateV2StateInfo, *contract.SmtRootInfo, error) {
+) (*contract.IStateStateInfo, *contract.IStateGistRootInfo, error) {
 	latestRootGist, err := r.state.GetGISTRoot(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, nil, err
@@ -169,7 +169,7 @@ func (r *Resolver) resolveState(
 	ctx context.Context,
 	id core.ID,
 	state *big.Int,
-) (*contract.StateV2StateInfo, error) {
+) (*contract.IStateStateInfo, error) {
 	stateInfo, err := r.state.GetStateInfoByIdAndState(&bind.CallOpts{Context: ctx}, id.BigInt(), state)
 	if err = notFoundErr(err); err != nil {
 		return nil, err
@@ -182,7 +182,7 @@ func (r *Resolver) resolveStateByGistRoot(
 	ctx context.Context,
 	id core.ID,
 	gistRoot *big.Int,
-) (*contract.StateV2StateInfo, *contract.SmtRootInfo, error) {
+) (*contract.IStateStateInfo, *contract.IStateGistRootInfo, error) {
 	proof, err := r.state.GetGISTProofByRoot(
 		&bind.CallOpts{Context: ctx},
 		id.BigInt(),
@@ -208,7 +208,7 @@ func (r *Resolver) resolveStateByGistRoot(
 	return &stateInfo, &gistInfo, verifyContractState(id, stateInfo)
 }
 
-func verifyContractState(id core.ID, state contract.StateV2StateInfo) error {
+func verifyContractState(id core.ID, state contract.IStateStateInfo) error {
 	if state.Id.Cmp(id.BigInt()) != 0 {
 		return fmt.Errorf("expected id '%s' not equal id '%s' from contract",
 			id, state.Id)
