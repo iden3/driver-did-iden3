@@ -3,7 +3,7 @@ module github.com/iden3/driver-did-iden3
 go 1.18
 
 require (
-	github.com/ethereum/go-ethereum v1.11.3
+	github.com/ethereum/go-ethereum v1.11.5
 	github.com/golang/mock v1.6.0
 	github.com/iden3/go-iden3-core v1.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -18,6 +18,8 @@ require (
 require (
 	github.com/deckarep/golang-set/v2 v2.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/holiman/uint256 v1.2.0 // indirect
+	github.com/iden3/contracts-abi/state/go/abi v1.0.1 // indirect
 )
 
 require (
