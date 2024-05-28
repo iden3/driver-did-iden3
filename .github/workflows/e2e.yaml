@@ -19,7 +19,7 @@ jobs:
 
       - name: Build file with supported networks
         run: |
-          echo -e "iden3:" > resolvers.settings.yaml
+          echo -e "polygon:" > resolvers.settings.yaml
           echo -e "  amoy:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_AMOY }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.POLYGON_AMOY_NODE_URL }}" >> resolvers.settings.yaml
@@ -60,7 +60,19 @@ jobs:
           --global-var issuer_server=${{ secrets.ISSUER_URL }} \
           --bail --verbose
 
+      - name: Run state tests
+        id: e2e_state
+        continue-on-error: true
+        run: | 
+          npm install -g newman && \
+          newman run tests/e2e/state_resolve_tests.json \
+          -g ./tests/e2e/dev_env.json \
+          --bail --verbose
+
       - name: e2e tests finished
         if: steps.e2e.outcome != 'success'
+        run: exit 1
+      - name: e2e test state finished
+        if: steps.e2e_state.outcome != 'success'
         run: exit 1
       # / TESTS
