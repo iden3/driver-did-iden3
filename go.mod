@@ -5,6 +5,8 @@ go 1.18
 require (
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/golang/mock v1.6.0
+	github.com/iden3/contracts-abi/state/go/abi v1.0.1
+	github.com/iden3/go-iden3-core/v2 v2.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.2
@@ -18,17 +20,13 @@ require (
 	github.com/deckarep/golang-set/v2 v2.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/holiman/uint256 v1.2.0 // indirect
-	github.com/iden3/contracts-abi/state/go/abi v1.0.1 // indirect
-	github.com/iden3/go-iden3-core/v2 v2.1.1 // indirect
 )
 
 require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -39,7 +37,6 @@ require (
 	github.com/iden3/go-merkletree-sql/v2 v2.0.0
 	github.com/ipfs/go-cid v0.3.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -50,14 +47,10 @@ require (
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/tsdb v0.10.0 // indirect
-	github.com/rjeczalik/notify v0.9.3 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/status-im/keycard-go v0.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
-	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
 	github.com/wealdtech/go-multicodec v1.4.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/sys v0.6.0 // indirect
