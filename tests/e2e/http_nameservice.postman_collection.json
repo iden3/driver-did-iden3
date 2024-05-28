@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "6f0dbf04-363c-41aa-b974-145ec74e3bc0",
-		"name": "Nameservice e2e",
+		"_postman_id": "301f6d89-ec5b-42a4-b00f-d3005d9988e6",
+		"name": "Nameservice e2e Iden3",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -36,7 +36,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"did_metadata\":{\n        \"method\": \"polygonid\",\n        \"blockchain\":\"polygon\",\n        \"network\": \"mumbai\"\n    }\n}",
+					"raw": "{\n    \"did_metadata\":{\n        \"method\": \"iden3\",\n        \"blockchain\":\"polygon\",\n        \"network\": \"amoy\",\n        \"type\": \"BJJ\"\n    }\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -87,7 +87,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"did_metadata\":{\n        \"method\": \"polygonid\",\n        \"blockchain\":\"polygon\",\n        \"network\": \"mumbai\"\n    }\n}",
+					"raw": "{\n    \"did_metadata\":{\n        \"method\": \"iden3\",\n        \"blockchain\":\"polygon\",\n        \"network\": \"amoy\",\n        \"type\": \"BJJ\"\n    }\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -125,8 +125,8 @@
 							"pm.test(\"Did doc not found\", () => {",
 							"  const responseJson = pm.response.json();",
 							"  pm.expect(responseJson.didDocument.id).to.eq(pm.collectionVariables.get(\"issuer_identity\"));",
-							"  pm.expect(responseJson.didDocument.authentication[0].id).to.eq(pm.collectionVariables.get(\"issuer_identity\"))",
-							"  pm.expect(responseJson.didDocument.authentication[0].published).to.eq(false)",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(pm.collectionVariables.get(\"issuer_identity\"))",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(false)",
 							"});",
 							"",
 							""
@@ -174,9 +174,9 @@
 							"",
 							"pm.test(\"Did doc not found\", () => {",
 							"  const responseJson = pm.response.json();",
-							"  pm.expect(responseJson.didDocument.authentication[0].id).to.eq(pm.collectionVariables.get(\"issuer_identity\"))",
-							"  pm.expect(responseJson.didDocument.authentication[0].published).to.eq(false)",
-							"  pm.expect(responseJson.didDocument.authentication[0].global).not.empty;",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(pm.collectionVariables.get(\"issuer_identity\"))",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(false)",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
 							"});",
 							""
 						],
@@ -267,11 +267,11 @@
 							"    const responseJson = pm.response.json();",
 							"    pm.expect(responseJson.didDocument.id).to.eq(pm.collectionVariables.get(\"issuer_identity\"));",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].published).to.eq(false)",
-							"    pm.expect(responseJson.didDocument.authentication[0].info).to.eq(undefined);",
-							"    pm.expect(responseJson.didDocument.authentication[0].global).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(false)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).to.eq(undefined);",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].id).to.eq(",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(",
 							"        pm.collectionVariables.get(\"issuer_identity\")",
 							"    )",
 							"});",
@@ -446,19 +446,19 @@
 							"    const responseJson = pm.response.json();",
 							"    pm.expect(responseJson.didDocument.id).to.eq(pm.collectionVariables.get(\"issuer_identity\"));",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].published).to.eq(true)",
-							"    pm.expect(responseJson.didDocument.authentication[0].info).not.empty;",
-							"    pm.expect(responseJson.didDocument.authentication[0].global).not.empty;",
-							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].id).to.eq(",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
+							"    console.log(responseJson.didDocument.verificationMethod[0].info)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(",
 							"        pm.collectionVariables.get(\"issuer_identity\") +",
 							"        \"?state=\" +",
-							"        pm.response.json().didDocument.authentication[0].info.state",
+							"        pm.response.json().didDocument.verificationMethod[0].info.state",
 							"    )",
 							"});",
 							"",
-							"pm.collectionVariables.set(\"latest_issuer_state\", pm.response.json().didDocument.authentication[0].info.state);",
-							"pm.collectionVariables.set(\"latest_gist_root\", pm.response.json().didDocument.authentication[0].global.root);",
+							"pm.collectionVariables.set(\"latest_issuer_state\", pm.response.json().didDocument.verificationMethod[0].info.state);",
+							"pm.collectionVariables.set(\"latest_gist_root\", pm.response.json().didDocument.verificationMethod[0].global.root);",
 							""
 						],
 						"type": "text/javascript"
@@ -500,14 +500,14 @@
 							"    const responseJson = pm.response.json();",
 							"    pm.expect(responseJson.didDocument.id).to.eq(pm.collectionVariables.get(\"issuer_identity\"));",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].published).to.eq(true)",
-							"    pm.expect(responseJson.didDocument.authentication[0].info).not.empty;",
-							"    pm.expect(responseJson.didDocument.authentication[0].global).to.equal(undefined);",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).to.equal(undefined);",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].id).to.eq(",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(",
 							"        pm.collectionVariables.get(\"issuer_identity\") +",
 							"        \"?state=\" +",
-							"        pm.response.json().didDocument.authentication[0].info.state",
+							"        pm.response.json().didDocument.verificationMethod[0].info.state",
 							"    )",
 							"});",
 							""
@@ -565,7 +565,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{resolver_server}}/1.0/gist?chain=polygon&networkid=mumbai",
+					"raw": "{{resolver_server}}/1.0/gist?chain=polygon&networkid=amoy",
 					"host": [
 						"{{resolver_server}}"
 					],
@@ -580,7 +580,7 @@
 						},
 						{
 							"key": "networkid",
-							"value": "mumbai"
+							"value": "amoy"
 						}
 					]
 				}
@@ -605,14 +605,14 @@
 							"    const responseJson = pm.response.json();",
 							"    pm.expect(responseJson.didDocument.id).to.eq(pm.collectionVariables.get(\"issuer_identity\"));",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].published).to.eq(true)",
-							"    pm.expect(responseJson.didDocument.authentication[0].info).not.empty;",
-							"    pm.expect(responseJson.didDocument.authentication[0].global).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].id).to.eq(",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(",
 							"        pm.collectionVariables.get(\"issuer_identity\") +",
 							"        \"?state=\" +",
-							"        pm.response.json().didDocument.authentication[0].info.state",
+							"        pm.response.json().didDocument.verificationMethod[0].info.state",
 							"    )",
 							"});",
 							"",
@@ -663,19 +663,19 @@
 							"const responseJson = pm.response.json();",
 							"    pm.expect(responseJson.didDocument.id).to.eq(pm.collectionVariables.get(\"issuer_identity\"));",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].published).to.eq(true)",
-							"    pm.expect(responseJson.didDocument.authentication[0].info).not.empty;",
-							"    pm.expect(responseJson.didDocument.authentication[0].global).to.eq(undefined);",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).to.eq(undefined);",
 							"",
-							"    pm.expect(responseJson.didDocument.authentication[0].id).to.eq(",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].id).to.eq(",
 							"        pm.collectionVariables.get(\"issuer_identity\") +",
 							"        \"?state=\" +",
 							"        pm.collectionVariables.get(\"issuer_genesis_state\")",
 							"    )",
 							"",
 							"    // check that genesis state was replaced",
-							"    pm.expect(responseJson.didDocument.authentication[0].info.replacedAtTimestamp).not.empty",
-							"    pm.expect(responseJson.didDocument.authentication[0].info.replacedAtBlock).not.empty",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info.replacedAtTimestamp).not.empty",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info.replacedAtBlock).not.empty",
 							"});",
 							"",
 							""

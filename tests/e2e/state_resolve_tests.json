@@ -1,0 +1,369 @@
+{
+	"info": {
+		"_postman_id": "e0cc50ab-00fe-4ef4-8541-350995f7c99d",
+		"name": "Nameservice users e2e tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Reslover state by NOT published genesis state",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"pm.test(\"Did doc not found\", () => {",
+							"  const responseJson = pm.response.json();",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(false)",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xAtJWsY8SvGXds5BpaiRKnsTisb8ER2ep4ZnE9zQd?state=8898e0d8cf56acd4c18b249b9a04095fa7d38a5d38e1b98d7ad5d560ac4ca32d",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xAtJWsY8SvGXds5BpaiRKnsTisb8ER2ep4ZnE9zQd"
+					],
+					"query": [
+						{
+							"key": "state",
+							"value": "8898e0d8cf56acd4c18b249b9a04095fa7d38a5d38e1b98d7ad5d560ac4ca32d"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve NOT published did",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"pm.test(\"Did doc not found\", () => {",
+							"  const responseJson = pm.response.json();",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(false)",
+							"  pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xAtJWsY8SvGXds5BpaiRKnsTisb8ER2ep4ZnE9zQd",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xAtJWsY8SvGXds5BpaiRKnsTisb8ER2ep4ZnE9zQd"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve state by gist for not published Issuer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xAtJWsY8SvGXds5BpaiRKnsTisb8ER2ep4ZnE9zQd?state=8898e0d8cf56acd4c18b249b9a04095fa7d38a5d38e1b98d7ad5d560ac4ca32d",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xAtJWsY8SvGXds5BpaiRKnsTisb8ER2ep4ZnE9zQd"
+					],
+					"query": [
+						{
+							"key": "state",
+							"value": "8898e0d8cf56acd4c18b249b9a04095fa7d38a5d38e1b98d7ad5d560ac4ca32d"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve published did",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"pm.test(\"Did doc not found\", () => {",
+							"    const responseJson = pm.response.json();",
+							"",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve state by state",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"pm.test(\"Did doc not found\", () => {",
+							"    const responseJson = pm.response.json();",
+							"    ",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).to.equal(undefined);",
+							"",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw?state=7a1a45d22b686cf1bd2f9fbecbed38b725a555e6d8ad68d3780feda9124b1a13",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw"
+					],
+					"query": [
+						{
+							"key": "state",
+							"value": "7a1a45d22b686cf1bd2f9fbecbed38b725a555e6d8ad68d3780feda9124b1a13"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve state by gist",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"pm.test(\"Did doc not found\", () => {",
+							"    const responseJson = pm.response.json();",
+							"",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).not.empty;",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw?gist=874ab0cf7d31b5367d2786e3b94df3c5bf7c6b715baec9c985cabfadb118d506",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw"
+					],
+					"query": [
+						{
+							"key": "gist",
+							"value": "874ab0cf7d31b5367d2786e3b94df3c5bf7c6b715baec9c985cabfadb118d506"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resolve state by issuer genesis state",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type header is application/json\", () => {",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
+							"});",
+							"",
+							"pm.test(\"Did doc not found\", () => {",
+							"const responseJson = pm.response.json();",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].published).to.eq(true)",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info).not.empty;",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].global).to.eq(undefined);",
+							"",
+							"    // check that genesis state was replaced",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info.replacedAtTimestamp).not.empty",
+							"    pm.expect(responseJson.didDocument.verificationMethod[0].info.replacedAtBlock).not.empty",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/1.0/identifiers/did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw?state=9b91cbd8957217a6846b57b76660b4f4044fd58ad87abf42e14439a2aae4be15",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"1.0",
+						"identifiers",
+						"did:iden3:polygon:amoy:xC8VZLUUfo5p9DWUawReh7QSstmYN6zR7qsQhQCsw"
+					],
+					"query": [
+						{
+							"key": "state",
+							"value": "9b91cbd8957217a6846b57b76660b4f4044fd58ad87abf42e14439a2aae4be15"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "latest_gist",
+			"value": ""
+		},
+		{
+			"key": "latest_issuer_state",
+			"value": ""
+		},
+		{
+			"key": "latest_gist_root",
+			"value": ""
+		}
+	]
+}
