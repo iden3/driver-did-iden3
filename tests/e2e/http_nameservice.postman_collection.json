@@ -227,7 +227,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{resolver_server}}/1.0/gist?chain=polygon&networkid=mumbai",
+					"raw": "{{resolver_server}}/1.0/gist?chain=polygon&networkid=amoy",
 					"host": [
 						"{{resolver_server}}"
 					],
@@ -242,7 +242,7 @@
 						},
 						{
 							"key": "networkid",
-							"value": "mumbai"
+							"value": "amoy"
 						}
 					]
 				}
