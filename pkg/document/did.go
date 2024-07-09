@@ -12,7 +12,8 @@ const (
 	ErrNotFound           ErrorCode = "notFound"
 	ErrUnknownNetwork     ErrorCode = "unknownNetwork"
 
-	StateType = "Iden3StateInfo2023"
+	StateType                            = "Iden3StateInfo2023"
+	EcdsaSecp256k1RecoveryMethod2020Type = "EcdsaSecp256k1RecoveryMethod2020"
 )
 
 const (
@@ -76,8 +77,10 @@ func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 }
 
 type VerificationMethod struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
+	ID                  string  `json:"id"`
+	Type                string  `json:"type"`
+	Controller          *string `json:"controller"`
+	BlockchainAccountID *string `json:"blockchainAccountId"`
 	IdentityState
 }
 

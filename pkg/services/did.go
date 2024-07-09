@@ -91,6 +91,23 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	didResolution := document.NewDidResolution()
 	didResolution.DidDocument.ID = did
+
+	addr, err := core.EthAddressFromID(userID)
+
+	if err == nil {
+		addressString := fmt.Sprintf("%x", addr)
+		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", resolver.BlockchainID(), addressString)
+		didResolution.DidDocument.VerificationMethod = append(
+			didResolution.DidDocument.VerificationMethod,
+			document.VerificationMethod{
+				ID:                  fmt.Sprintf("%s#vm-%d", did, 1),
+				Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
+				Controller:          &did,
+				BlockchainAccountID: &blockchainAccountID,
+			},
+		)
+	}
+
 	didResolution.DidDocument.VerificationMethod = append(
 		didResolution.DidDocument.VerificationMethod,
 		document.VerificationMethod{
