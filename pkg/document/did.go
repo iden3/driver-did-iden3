@@ -27,8 +27,8 @@ const (
 
 // DidResolution representation of did resolution.
 type DidResolution struct {
-	Context     string       `json:"@context,omitempty"`
-	DidDocument *DidDocument `json:"didDocument"`
+	Context     string                  `json:"@context,omitempty"`
+	DidDocument *verifiable.DIDDocument `json:"didDocument"`
 	// should exist in responses, but can be empty.
 	// https://www.w3.org/TR/did-core/#did-resolution
 	DidResolutionMetadata *DidResolutionMetadata `json:"didResolutionMetadata"`
@@ -39,7 +39,7 @@ type DidResolution struct {
 func NewDidResolution() *DidResolution {
 	return &DidResolution{
 		Context: defaultContext,
-		DidDocument: &DidDocument{
+		DidDocument: &verifiable.DIDDocument{
 			Context:            []string{defaultDidDocContext, iden3Context},
 			VerificationMethod: []verifiable.CommonVerificationMethod{},
 		},
@@ -76,13 +76,6 @@ func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 		},
 		DidDocumentMetadata: &DidDocumentMetadata{},
 	}
-}
-
-// DidDocument representation of did document.
-type DidDocument struct {
-	Context            []string                              `json:"@context"`
-	ID                 string                                `json:"id"`
-	VerificationMethod []verifiable.CommonVerificationMethod `json:"verificationMethod"`
 }
 
 // DidResolutionMetadata representation of resolution metadata.
