@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strings"
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-merkletree-sql/v2"
+	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/pkg/errors"
 )
 
@@ -91,16 +93,37 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	didResolution := document.NewDidResolution()
 	didResolution.DidDocument.ID = did
+
+	addr, err := core.EthAddressFromID(userID)
+
+	chainIDStateAddress := resolver.BlockchainID()
+
+	if err == nil {
+		addressString := fmt.Sprintf("%x", addr)
+		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(chainIDStateAddress, ":")[0], addressString)
+		didResolution.DidDocument.VerificationMethod = append(
+			didResolution.DidDocument.VerificationMethod,
+			verifiable.CommonVerificationMethod{
+				ID:                  fmt.Sprintf("%s#ethereum-based-id", did),
+				Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
+				Controller:          did,
+				BlockchainAccountID: blockchainAccountID,
+			},
+		)
+	}
+
+	isPublished := isPublished(identityState.StateInfo)
 	didResolution.DidDocument.VerificationMethod = append(
 		didResolution.DidDocument.VerificationMethod,
-		document.VerificationMethod{
-			ID:   getRepresentaionID(did, identityState),
-			Type: document.StateType,
-			IdentityState: document.IdentityState{
-				BlockchainAccountID: resolver.BlockchainID(),
-				Published:           isPublished(identityState.StateInfo),
-				Info:                info,
-				Global:              gist,
+		verifiable.CommonVerificationMethod{
+			ID:                   getRepresentaionID(did, identityState),
+			Type:                 document.StateType,
+			StateContractAddress: chainIDStateAddress,
+			Controller:           did,
+			IdentityState: verifiable.IdentityState{
+				Published: &isPublished,
+				Info:      info,
+				Global:    gist,
 			},
 		},
 	)
@@ -158,7 +181,7 @@ func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain strin
 	return d.GetDidDocument(ctx, did, nil)
 }
 
-func (d *DidDocumentServices) GetGist(ctx context.Context, chain, network string, opts *ResolverOpts) (*document.GistInfo, error) {
+func (d *DidDocumentServices) GetGist(ctx context.Context, chain, network string, opts *ResolverOpts) (*verifiable.GistInfo, error) {
 	if opts == nil {
 		opts = &ResolverOpts{}
 	}
