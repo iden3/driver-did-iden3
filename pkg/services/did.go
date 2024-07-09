@@ -95,9 +95,11 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	addr, err := core.EthAddressFromID(userID)
 
+	blockchainID := resolver.BlockchainID()
+
 	if err == nil {
 		addressString := fmt.Sprintf("%x", addr)
-		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(resolver.BlockchainID(), ":")[0], addressString)
+		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(blockchainID, ":")[0], addressString)
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
 			document.VerificationMethod{
@@ -109,16 +111,17 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		)
 	}
 
+	isPublished := isPublished(identityState.StateInfo)
 	didResolution.DidDocument.VerificationMethod = append(
 		didResolution.DidDocument.VerificationMethod,
 		document.VerificationMethod{
-			ID:   getRepresentaionID(did, identityState),
-			Type: document.StateType,
+			ID:                  getRepresentaionID(did, identityState),
+			Type:                document.StateType,
+			BlockchainAccountID: &blockchainID,
 			IdentityState: document.IdentityState{
-				BlockchainAccountID: resolver.BlockchainID(),
-				Published:           isPublished(identityState.StateInfo),
-				Info:                info,
-				Global:              gist,
+				Published: &isPublished,
+				Info:      info,
+				Global:    gist,
 			},
 		},
 	)

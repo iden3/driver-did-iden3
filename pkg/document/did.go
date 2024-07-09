@@ -78,8 +78,8 @@ func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 
 type VerificationMethod struct {
 	ID                  string  `json:"id"`
-	Type                string  `json:"type"`
-	Controller          *string `json:"controller"`
+	Type                string  `json:"type,omitempty"`
+	Controller          *string `json:"controller,omitempty"`
 	BlockchainAccountID *string `json:"blockchainAccountId"`
 	IdentityState
 }
@@ -125,8 +125,7 @@ type GistInfo struct {
 
 // IdentityState representation all info about identity.
 type IdentityState struct {
-	BlockchainAccountID string     `json:"blockchainAccountId"`
-	Published           bool       `json:"published"`
-	Info                *StateInfo `json:"info,omitempty"`
-	Global              *GistInfo  `json:"global,omitempty"`
+	Published *bool      `json:"published,omitempty"`
+	Info      *StateInfo `json:"info,omitempty"`
+	Global    *GistInfo  `json:"global,omitempty"`
 }
