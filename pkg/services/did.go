@@ -100,7 +100,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
 			document.VerificationMethod{
-				ID:                  fmt.Sprintf("%s#vm-%d", did, 1),
+				ID:                  fmt.Sprintf("%s#ethereum-based-id", did),
 				Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
 				Controller:          &did,
 				BlockchainAccountID: &blockchainAccountID,
