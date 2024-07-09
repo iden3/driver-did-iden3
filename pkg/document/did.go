@@ -79,8 +79,8 @@ func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 type VerificationMethod struct {
 	ID                  string  `json:"id"`
 	Type                string  `json:"type"`
+	BlockchainAccountID string  `json:"blockchainAccountId"`
 	Controller          *string `json:"controller,omitempty"`
-	BlockchainAccountID *string `json:"blockchainAccountId"`
 	IdentityState
 }
 
