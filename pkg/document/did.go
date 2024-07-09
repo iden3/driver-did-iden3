@@ -2,6 +2,8 @@ package document
 
 import (
 	"time"
+
+	"github.com/iden3/go-schema-processor/v2/verifiable"
 )
 
 type ErrorCode string
@@ -39,7 +41,7 @@ func NewDidResolution() *DidResolution {
 		Context: defaultContext,
 		DidDocument: &DidDocument{
 			Context:            []string{defaultDidDocContext, iden3Context},
-			VerificationMethod: []VerificationMethod{},
+			VerificationMethod: []verifiable.CommonVerificationMethod{},
 		},
 		DidResolutionMetadata: &DidResolutionMetadata{
 			ContentType: defaultContentType,
@@ -76,19 +78,11 @@ func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 	}
 }
 
-type VerificationMethod struct {
-	ID                  string  `json:"id"`
-	Type                string  `json:"type"`
-	BlockchainAccountID string  `json:"blockchainAccountId"`
-	Controller          *string `json:"controller,omitempty"`
-	IdentityState
-}
-
 // DidDocument representation of did document.
 type DidDocument struct {
-	Context            []string             `json:"@context"`
-	ID                 string               `json:"id"`
-	VerificationMethod []VerificationMethod `json:"verificationMethod"`
+	Context            []string                              `json:"@context"`
+	ID                 string                                `json:"id"`
+	VerificationMethod []verifiable.CommonVerificationMethod `json:"verificationMethod"`
 }
 
 // DidResolutionMetadata representation of resolution metadata.
@@ -101,31 +95,3 @@ type DidResolutionMetadata struct {
 
 // DidDocumentMetadata metadata of did document.
 type DidDocumentMetadata struct{}
-
-// StateInfo representation state of identity.
-type StateInfo struct {
-	ID                  string `json:"id"`
-	State               string `json:"state"`
-	ReplacedByState     string `json:"replacedByState"`
-	CreatedAtTimestamp  string `json:"createdAtTimestamp"`
-	ReplacedAtTimestamp string `json:"replacedAtTimestamp"`
-	CreatedAtBlock      string `json:"createdAtBlock"`
-	ReplacedAtBlock     string `json:"replacedAtBlock"`
-}
-
-// GistInfo representation state of gist root.
-type GistInfo struct {
-	Root                string `json:"root"`
-	ReplacedByRoot      string `json:"replacedByRoot"`
-	CreatedAtTimestamp  string `json:"createdAtTimestamp"`
-	ReplacedAtTimestamp string `json:"replacedAtTimestamp"`
-	CreatedAtBlock      string `json:"createdAtBlock"`
-	ReplacedAtBlock     string `json:"replacedAtBlock"`
-}
-
-// IdentityState representation all info about identity.
-type IdentityState struct {
-	Published *bool      `json:"published,omitempty"`
-	Info      *StateInfo `json:"info,omitempty"`
-	Global    *GistInfo  `json:"global,omitempty"`
-}
