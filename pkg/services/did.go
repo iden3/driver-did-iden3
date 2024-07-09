@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strings"
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
@@ -96,7 +97,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	if err == nil {
 		addressString := fmt.Sprintf("%x", addr)
-		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", resolver.BlockchainID(), addressString)
+		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(resolver.BlockchainID(), ":")[0], addressString)
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
 			document.VerificationMethod{
