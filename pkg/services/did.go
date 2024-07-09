@@ -119,6 +119,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 			ID:                  getRepresentaionID(did, identityState),
 			Type:                document.StateType,
 			BlockchainAccountID: blockchainID,
+			Controller:          did,
 			IdentityState: verifiable.IdentityState{
 				Published: &isPublished,
 				Info:      info,
