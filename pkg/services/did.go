@@ -96,11 +96,11 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	addr, err := core.EthAddressFromID(userID)
 
-	chainIdStateAddress := resolver.BlockchainID()
+	chainIDStateAddress := resolver.BlockchainID()
 
 	if err == nil {
 		addressString := fmt.Sprintf("%x", addr)
-		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(chainIdStateAddress, ":")[0], addressString)
+		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(chainIDStateAddress, ":")[0], addressString)
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
 			verifiable.CommonVerificationMethod{
@@ -118,7 +118,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		verifiable.CommonVerificationMethod{
 			ID:                   getRepresentaionID(did, identityState),
 			Type:                 document.StateType,
-			StateContractAddress: chainIdStateAddress,
+			StateContractAddress: chainIDStateAddress,
 			Controller:           did,
 			IdentityState: verifiable.IdentityState{
 				Published: &isPublished,
