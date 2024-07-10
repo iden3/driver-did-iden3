@@ -116,7 +116,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	didResolution.DidDocument.VerificationMethod = append(
 		didResolution.DidDocument.VerificationMethod,
 		verifiable.CommonVerificationMethod{
-			ID:                   getRepresentaionID(did, identityState),
+			ID:                   fmt.Sprintf("%s#state-info", did),
 			Type:                 document.StateType,
 			StateContractAddress: chainIDStateAddress,
 			Controller:           did,
@@ -237,6 +237,8 @@ func expectedError(err error) (*document.DidResolution, error) {
 	return nil, err
 }
 
+// after discussion we decided not to include state in verification method id,
+// so we can have consistent id for verification
 func getRepresentaionID(did string, state IdentityState) string {
 	if state.StateInfo != nil && state.StateInfo.State != nil {
 		h, _ := merkletree.NewHashFromBigInt(state.StateInfo.State)
