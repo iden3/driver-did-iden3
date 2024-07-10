@@ -11,7 +11,6 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
-	"github.com/iden3/go-merkletree-sql/v2"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/pkg/errors"
 )
@@ -99,6 +98,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	chainIDStateAddress := resolver.BlockchainID()
 
 	if err == nil {
+		didResolution.DidDocument.Context = append(didResolution.DidDocument.Context.([]string), document.EcdsaSecp256k1RecoveryContext)
 		addressString := fmt.Sprintf("%x", addr)
 		blockchainAccountID := fmt.Sprintf("eip155:%s:0x%s", strings.Split(chainIDStateAddress, ":")[0], addressString)
 		didResolution.DidDocument.VerificationMethod = append(
@@ -116,7 +116,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	didResolution.DidDocument.VerificationMethod = append(
 		didResolution.DidDocument.VerificationMethod,
 		verifiable.CommonVerificationMethod{
-			ID:                   getRepresentaionID(did, identityState),
+			ID:                   fmt.Sprintf("%s#state-info", did),
 			Type:                 document.StateType,
 			StateContractAddress: chainIDStateAddress,
 			Controller:           did,
@@ -237,10 +237,12 @@ func expectedError(err error) (*document.DidResolution, error) {
 	return nil, err
 }
 
-func getRepresentaionID(did string, state IdentityState) string {
-	if state.StateInfo != nil && state.StateInfo.State != nil {
-		h, _ := merkletree.NewHashFromBigInt(state.StateInfo.State)
-		return fmt.Sprintf("%s?state=%s", did, h.Hex())
-	}
-	return did
-}
+// after discussion we decided not to include state in verification method id,
+// so we can have consistent id for verification
+// func getRepresentaionID(did string, state IdentityState) string {
+// 	if state.StateInfo != nil && state.StateInfo.State != nil {
+// 		h, _ := merkletree.NewHashFromBigInt(state.StateInfo.State)
+// 		return fmt.Sprintf("%s?state=%s", did, h.Hex())
+// 	}
+// 	return did
+// }
