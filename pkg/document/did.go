@@ -19,10 +19,11 @@ const (
 )
 
 const (
-	defaultContext       = "https://w3id.org/did-resolution/v1"
-	defaultDidDocContext = "https://www.w3.org/ns/did/v1"
-	iden3Context         = "https://schema.iden3.io/core/jsonld/auth.jsonld"
-	defaultContentType   = "application/did+ld+json"
+	defaultContext                = "https://w3id.org/did-resolution/v1"
+	defaultDidDocContext          = "https://www.w3.org/ns/did/v1"
+	iden3Context                  = "https://schema.iden3.io/core/jsonld/auth.jsonld"
+	EcdsaSecp256k1RecoveryContext = "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-2.0.jsonld"
+	defaultContentType            = "application/did+ld+json"
 )
 
 // DidResolution representation of did resolution.
