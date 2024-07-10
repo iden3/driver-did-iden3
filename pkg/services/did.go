@@ -11,7 +11,6 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
-	"github.com/iden3/go-merkletree-sql/v2"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/pkg/errors"
 )
@@ -239,10 +238,10 @@ func expectedError(err error) (*document.DidResolution, error) {
 
 // after discussion we decided not to include state in verification method id,
 // so we can have consistent id for verification
-func getRepresentaionID(did string, state IdentityState) string {
-	if state.StateInfo != nil && state.StateInfo.State != nil {
-		h, _ := merkletree.NewHashFromBigInt(state.StateInfo.State)
-		return fmt.Sprintf("%s?state=%s", did, h.Hex())
-	}
-	return did
-}
+// func getRepresentaionID(did string, state IdentityState) string {
+// 	if state.StateInfo != nil && state.StateInfo.State != nil {
+// 		h, _ := merkletree.NewHashFromBigInt(state.StateInfo.State)
+// 		return fmt.Sprintf("%s?state=%s", did, h.Hex())
+// 	}
+// 	return did
+// }
