@@ -34,7 +34,7 @@ jobs:
           echo -e "  main:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_MAIN }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.POLYGON_MAIN_NODE_URL }}" >> resolvers.settings.yaml
-          echo -e "privado:" > resolvers.settings.yaml
+          echo -e "privado:" >> resolvers.settings.yaml
           echo -e "  main:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_PRIVADO }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.PRIVADO_MAIN_NODE_URL }}" >> resolvers.settings.yaml
