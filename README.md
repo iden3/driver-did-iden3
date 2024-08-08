@@ -8,7 +8,9 @@ Driver for the iden3 DID method
         amoy:
             contractAddress: "0xf6..."
             networkURL: "https://polygon-amoy..."
+            walletKey: "<private ethereum key for signing EIP712>"
     ```
+    `walletKey` is only needed for the resolver if it's a trusted resolver that includes signature of EIP712 message when requested in the resolution with `signature=EthereumEip712Signature2021`.
 2. Build docker container:
     ```bash
     docker build -t driver-did-iden3:local

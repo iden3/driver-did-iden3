@@ -39,22 +39,16 @@ linters-settings:
 linters:
   enable:
     - bodyclose
-    - megacheck
     - revive
     - govet
     - unconvert
-    - megacheck
-    - structcheck
-    - gas
+    - gosec
     - gocyclo
     - dupl
     - misspell
     - unparam
-    - varcheck
-    - deadcode
     - typecheck
     - ineffassign
-    - varcheck
     - stylecheck
     - gochecknoinits
     - exportloopref
@@ -66,6 +60,8 @@ linters:
     - errcheck
     - gofmt
     - goimports
+    - staticcheck
+    - unused
   fast: false
   disable-all: true
 
