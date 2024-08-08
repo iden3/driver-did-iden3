@@ -76,4 +76,4 @@ jobs:
           cd driver-did-iden3 && \
           docker buildx build --push \
            --platform linux/amd64,linux/arm64 \
-           -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.ref_name }} \
+           -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.ref_name }} .
