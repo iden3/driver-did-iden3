@@ -58,6 +58,8 @@ jobs:
           newman run tests/e2e/http_nameservice.postman_collection.json \
           -g ./tests/e2e/dev_env.json \
           --global-var issuer_server=${{ secrets.ISSUER_URL }} \
+          --global-var username=${{ secrets.ISSUER_NODE_USER }} \
+          --global-var password=${{ secrets.ISSUER_NODE_PASSWROD }} \
           --bail --verbose
 
       - name: Run state tests
