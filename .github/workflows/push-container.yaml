@@ -18,8 +18,6 @@ jobs:
     steps:
       - name: Checkout driver-did-iden3
         uses: actions/checkout@v3
-        with:
-          path: driver-did-iden3
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
@@ -52,7 +50,6 @@ jobs:
 
       - name: build and deploy to DockerHub
         run: |
-          cd driver-did-iden3 && \
           docker buildx build --push \
            --platform linux/amd64,linux/arm64 \
            -t ghcr.io/iden3/driver-did-iden3:${{ github.ref_name }} \
