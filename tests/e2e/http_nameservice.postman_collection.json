@@ -400,6 +400,41 @@
 			"response": []
 		},
 		{
+			"name": "Publish issuer state",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{issuer_server}}/v1/{{issuer_identity}}/state/publish",
+					"host": [
+						"{{issuer_server}}"
+					],
+					"path": [
+						"v1",
+						"{{issuer_identity}}",
+						"state",
+						"publish"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "KYCAgeCredential(Non merklized) wait for MTP",
 			"event": [
 				{
