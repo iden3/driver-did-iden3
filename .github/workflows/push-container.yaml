@@ -1,7 +1,11 @@
+# This workflow builds a docker image and pushes it to GitHub Container Registry
+# We need to have this image in public registry for compatibility with universal resolver
 name: Publish driver-did-iden3
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - '!v*.*.*-dev'
+      - 'v*'
   workflow_dispatch:
 
 jobs:
