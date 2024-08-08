@@ -13,11 +13,11 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
 							"});",
 							"pm.test(\"Content-Type header is application/json\", () => {",
-							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json; charset=utf-8');",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
 							"});",
 							"",
 							"pm.test(\"Identifier is not empty\", () => {",
@@ -80,11 +80,11 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
 							"});",
 							"pm.test(\"Content-Type header is application/json\", () => {",
-							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json; charset=utf-8');",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
 							"});",
 							"",
 							"pm.test(\"Identifier is not empty\", () => {",
@@ -343,11 +343,11 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Status code is 202\", function () {",
-							"    pm.response.to.have.status(202);",
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
 							"});",
 							"pm.test(\"Content-Type header is application/json\", () => {",
-							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json; charset=utf-8');",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
 							"});",
 							"",
 							"pm.collectionVariables.set(\"age_claim_non_merklized_id\", pm.response.json().id);",
@@ -386,13 +386,12 @@
 					}
 				},
 				"url": {
-					"raw": "{{issuer_server}}/v1/identities/{{issuer_identity}}/claims",
+					"raw": "{{issuer_server}}/v1/{{issuer_identity}}/claims",
 					"host": [
 						"{{issuer_server}}"
 					],
 					"path": [
 						"v1",
-						"identities",
 						"{{issuer_identity}}",
 						"claims"
 					]
@@ -415,7 +414,7 @@
 							"    pm.response.to.have.status(200);",
 							"});",
 							"pm.test(\"Content-Type header is application/json\", () => {",
-							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json; charset=utf-8');",
+							"  pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/json');",
 							"});",
 							"",
 							"pm.test(\"Proof section is NOT empty\", function () {",
@@ -474,13 +473,12 @@
 					}
 				},
 				"url": {
-					"raw": "{{issuer_server}}/v1/identities/{{issuer_identity}}/claims/{{age_claim_non_merklized_id}}",
+					"raw": "{{issuer_server}}/v1/{{issuer_identity}}/claims/{{age_claim_non_merklized_id}}",
 					"host": [
 						"{{issuer_server}}"
 					],
 					"path": [
 						"v1",
-						"identities",
 						"{{issuer_identity}}",
 						"claims",
 						"{{age_claim_non_merklized_id}}"
