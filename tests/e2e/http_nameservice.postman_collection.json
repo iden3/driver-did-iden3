@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "301f6d89-ec5b-42a4-b00f-d3005d9988e6",
+		"_postman_id": "aefc13c9-2239-409c-ba32-b0c10b4ad7c9",
 		"name": "Nameservice e2e Iden3",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37022085"
 	},
 	"item": [
 		{
@@ -27,16 +28,32 @@
 							"pm.collectionVariables.set(\"issuer_identity\", pm.response.json().identifier);",
 							"pm.collectionVariables.set(\"issuer_genesis_state\", pm.response.json().state.state)"
 						],
-						"type": "text/javascript"
+						"type": "text/javascript",
+						"packages": {}
 					}
 				}
 			],
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"did_metadata\":{\n        \"method\": \"iden3\",\n        \"blockchain\":\"polygon\",\n        \"network\": \"amoy\",\n        \"type\": \"BJJ\"\n    }\n}",
+					"raw": "{\n  \"didMetadata\": {\n    \"method\": \"polygonid\",\n    \"blockchain\": \"polygon\",\n    \"network\": \"amoy\",\n    \"type\": \"BJJ\"\n  }\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -44,12 +61,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{issuer_server}}/api/v1/identities",
+					"raw": "{{issuer_server}}/v1/identities",
 					"host": [
 						"{{issuer_server}}"
 					],
 					"path": [
-						"api",
 						"v1",
 						"identities"
 					]
@@ -78,16 +94,32 @@
 							"",
 							"pm.collectionVariables.set(\"user_identity\", pm.response.json().identifier);"
 						],
-						"type": "text/javascript"
+						"type": "text/javascript",
+						"packages": {}
 					}
 				}
 			],
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"did_metadata\":{\n        \"method\": \"iden3\",\n        \"blockchain\":\"polygon\",\n        \"network\": \"amoy\",\n        \"type\": \"BJJ\"\n    }\n}",
+					"raw": "{\n  \"didMetadata\": {\n    \"method\": \"polygonid\",\n    \"blockchain\": \"polygon\",\n    \"network\": \"amoy\",\n    \"type\": \"BJJ\"\n  }\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -95,12 +127,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{issuer_server}}/api/v1/identities",
+					"raw": "{{issuer_server}}/v1/identities",
 					"host": [
 						"{{issuer_server}}"
 					],
 					"path": [
-						"api",
 						"v1",
 						"identities"
 					]
@@ -322,11 +353,27 @@
 							"pm.collectionVariables.set(\"age_claim_non_merklized_id\", pm.response.json().id);",
 							""
 						],
-						"type": "text/javascript"
+						"type": "text/javascript",
+						"packages": {}
 					}
 				}
 			],
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -339,12 +386,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{issuer_server}}/api/v1/identities/{{issuer_identity}}/claims",
+					"raw": "{{issuer_server}}/v1/identities/{{issuer_identity}}/claims",
 					"host": [
 						"{{issuer_server}}"
 					],
 					"path": [
-						"api",
 						"v1",
 						"identities",
 						"{{issuer_identity}}",
@@ -392,7 +438,8 @@
 							"  postman.setNextRequest(pm.info.requestId); // retry the current request",
 							"}"
 						],
-						"type": "text/javascript"
+						"type": "text/javascript",
+						"packages": {}
 					}
 				}
 			],
@@ -400,6 +447,21 @@
 				"disableBodyPruning": true
 			},
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"body": {
@@ -412,12 +474,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{issuer_server}}/api/v1/identities/{{issuer_identity}}/claims/{{age_claim_non_merklized_id}}",
+					"raw": "{{issuer_server}}/v1/identities/{{issuer_identity}}/claims/{{age_claim_non_merklized_id}}",
 					"host": [
 						"{{issuer_server}}"
 					],
 					"path": [
-						"api",
 						"v1",
 						"identities",
 						"{{issuer_identity}}",
