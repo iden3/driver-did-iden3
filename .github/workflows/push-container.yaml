@@ -4,8 +4,8 @@ name: Publish driver-did-iden3
 on:
   push:
     tags:
-      - '!v*.*.*-dev'
       - 'v*'
+      - '!v*.*.*-dev'
   workflow_dispatch:
 
 jobs:
