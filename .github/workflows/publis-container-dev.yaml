@@ -13,10 +13,10 @@ env:
 jobs:
   build_driver:
     env:
-      STATE_CONTRACT_ADDRESS_MAIN: "0x624ce98D2d27b20b8f8d521723Df8fC4db71D79D"
-      STATE_CONTRACT_ADDRESS_AMOY: "0x1a4cC30f2aA0377b0c3bc9848766D90cb4404124"
-      STATE_CONTRACT_ADDRESS_PRIVADO_MAIN: "0x0DDd8701C91d8d1Ba35c9DbA98A45fe5bA8A877E"
-      STATE_CONTRACT_ADDRESS_PRIVADO_TEST: "0xE5BfD683F1Ca574B5be881b7DbbcFDCE9DDBAb90"
+      STATE_CONTRACT_ADDRESS_POLYGON_MAIN: "0x624ce98D2d27b20b8f8d521723Df8fC4db71D79D"
+      STATE_CONTRACT_ADDRESS_POLYGON_AMOY: "0x1a4cC30f2aA0377b0c3bc9848766D90cb4404124"
+      STATE_CONTRACT_ADDRESS_PRIVADO_MAIN: "0x975556428F077dB5877Ea2474D783D6C69233742"
+      STATE_CONTRACT_ADDRESS_PRIVADO_TEST: "0x975556428F077dB5877Ea2474D783D6C69233742"
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -47,11 +47,11 @@ jobs:
           cd driver-did-iden3
           echo -e "polygon:" > resolvers.settings.yaml
           echo -e "  amoy:" >> resolvers.settings.yaml
-          echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_AMOY }}" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_POLYGON_AMOY }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.POLYGON_AMOY_NODE_URL }}" >> resolvers.settings.yaml
           echo -e "    walletKey: ${{ secrets.SIGNER_PRIVATE_KEY }}" >> resolvers.settings.yaml
           echo -e "  main:" >> resolvers.settings.yaml
-          echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_MAIN }}" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_POLYGON_MAIN }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.POLYGON_MAIN_NODE_URL }}" >> resolvers.settings.yaml
           echo -e "    walletKey: ${{ secrets.SIGNER_PRIVATE_KEY }}" >> resolvers.settings.yaml
           echo -e "privado:" >> resolvers.settings.yaml
