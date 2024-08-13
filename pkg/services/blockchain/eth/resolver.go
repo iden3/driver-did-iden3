@@ -207,21 +207,28 @@ func (r *Resolver) Resolve(
 		default:
 			stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
 		}
-
-		if err != nil && err.Error() != "state not found" {
+		// err == http.505
+		if err != nil && !errors.Is(err, services.ErrNotFound) {
 			return services.IdentityState{}, err
 		}
 
-		if err != nil {
+		if opts.State != nil && errors.Is(err, services.ErrNotFound) {
 			idGen, err := core.CheckGenesisStateID(userID.BigInt(), opts.State)
 			if err != nil {
 				return services.IdentityState{}, err
 			}
 			if !idGen {
-				return services.IdentityState{}, services.ErrNotFound
+				return services.IdentityState{},
+					fmt.Errorf("identity '%s' is '%v' and state '%s' not genesis", userID.String(), err, opts.State)
 			}
-			stateInfo = &contract.IStateStateInfo{}
-			stateInfo.State = opts.State
+			stateInfo = &contract.IStateStateInfo{
+				State:               opts.State,
+				ReplacedByState:     big.NewInt(0),
+				CreatedAtTimestamp:  big.NewInt(0),
+				ReplacedAtTimestamp: big.NewInt(0),
+				CreatedAtBlock:      big.NewInt(0),
+				ReplacedAtBlock:     big.NewInt(0),
+			}
 		}
 	}
 
