@@ -207,8 +207,21 @@ func (r *Resolver) Resolve(
 		default:
 			stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
 		}
-		if err != nil && err.Error() != "identity not found" {
+
+		if err != nil && err.Error() != "state not found" {
 			return services.IdentityState{}, err
+		}
+
+		if err != nil {
+			idGen, err := core.CheckGenesisStateID(userID.BigInt(), opts.State)
+			if err != nil {
+				return services.IdentityState{}, err
+			}
+			if !idGen {
+				return services.IdentityState{}, services.ErrNotFound
+			}
+			stateInfo = &contract.IStateStateInfo{}
+			stateInfo.State = opts.State
 		}
 	}
 
