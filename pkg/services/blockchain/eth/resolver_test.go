@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang/mock/gomock"
 	contract "github.com/iden3/contracts-abi/state/go/abi"
+	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	cm "github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth/contract/mock"
 	core "github.com/iden3/go-iden3-core/v2"
@@ -220,7 +221,7 @@ func TestResolveSignature_Success(t *testing.T) {
 			name: "resolve identity state by gist",
 			opts: &services.ResolverOpts{
 				GistRoot:  big.NewInt(1),
-				Signature: "EthereumEip712Signature2021",
+				Signature: string(document.EthereumEip712SignatureProof2021Type),
 			},
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
@@ -260,7 +261,7 @@ func TestResolveSignature_Success(t *testing.T) {
 			name: "resolve identity state by state",
 			opts: &services.ResolverOpts{
 				State:     big.NewInt(1),
-				Signature: "EthereumEip712Signature2021",
+				Signature: string(document.EthereumEip712SignatureProof2021Type),
 			},
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
@@ -286,7 +287,7 @@ func TestResolveSignature_Success(t *testing.T) {
 		{
 			name: "resolve latest state",
 			opts: &services.ResolverOpts{
-				Signature: "EthereumEip712Signature2021",
+				Signature: string(document.EthereumEip712SignatureProof2021Type),
 			},
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
@@ -322,7 +323,7 @@ func TestResolveSignature_Success(t *testing.T) {
 			name: "resolve only gist",
 			opts: &services.ResolverOpts{
 				GistRoot:  big.NewInt(400),
-				Signature: "EthereumEip712Signature2021",
+				Signature: string(document.EthereumEip712SignatureProof2021Type),
 			},
 			userDID: userEmptyDID,
 			contractMock: func(c *cm.MockStateContract) {

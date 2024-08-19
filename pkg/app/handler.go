@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-merkletree-sql/v2"
@@ -129,10 +130,10 @@ func getResolverOpts(state, gistRoot, signature string) (ro services.ResolverOpt
 		}
 		ro.GistRoot = g.BigInt()
 	}
+	if signature != "" && signature != string(document.EthereumEip712SignatureProof2021Type) {
+		return ro, fmt.Errorf("not supported signature type %s", signature)
+	}
 	if signature != "" {
-		if signature != "EthereumEip712Signature2021" {
-			return ro, fmt.Errorf("not supported signature type %s", signature)
-		}
 		ro.Signature = signature
 	}
 	return
