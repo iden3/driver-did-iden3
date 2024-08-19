@@ -186,9 +186,9 @@ func (r *Resolver) Resolve(
 	)
 
 	if did.IDStrings[2] == "000000000000000000000000000000000000000000" {
+		// If gist root is not provided, it will try to resolve with gist root 0
 		if opts.GistRoot == nil {
-			return services.IdentityState{},
-				errors.New("options GistRoot is required for root only did")
+			opts.GistRoot = big.NewInt(0)
 		}
 		gistInfo, err = r.resolveGistRootOnly(ctx, opts.GistRoot)
 		if err != nil {
@@ -221,7 +221,7 @@ func (r *Resolver) Resolve(
 			}
 			if !idGen {
 				return services.IdentityState{},
-					fmt.Errorf("identity '%s' is '%v' and state '%s' not genesis", userID.String(), err, opts.State)
+					fmt.Errorf("identity '%s' state '%s' is not found and is not genesis", userID.String(), opts.State)
 			}
 			stateInfo = &contract.IStateStateInfo{
 				State:               opts.State,

@@ -92,6 +92,10 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		}
 	}
 
+	if err != nil && opts.State != nil {
+		return document.NewDidNotFoundResolution(err.Error()), nil
+	}
+
 	info, err := identityState.StateInfo.ToDidRepresentation()
 	if err != nil {
 		return nil, fmt.Errorf("invalid resolver response: %v", err)
@@ -144,7 +148,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	if err == nil && opts.Signature != "" {
 		primaryType := IdentityStateType
-		if userDID.IDStrings[2] == "000000000000000000000000000000000000000000" {
+		if identityState.StateInfo == nil {
 			primaryType = GlobalStateType
 		}
 		eip712TypedData, err := resolver.TypedData(primaryType, *userDID, identityState, walletAddress)
