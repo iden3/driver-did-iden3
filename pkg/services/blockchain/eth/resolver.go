@@ -190,8 +190,10 @@ func (r *Resolver) Resolve(
 			return services.IdentityState{},
 				errors.New("options GistRoot is required for root only did")
 		}
-		stateInfo = nil
 		gistInfo, err = r.resolveGistRootOnly(ctx, opts.GistRoot)
+		if err != nil {
+			return services.IdentityState{}, err
+		}
 	} else {
 		userID, err := core.IDFromDID(did)
 		if err != nil {
@@ -277,25 +279,17 @@ func (r *Resolver) VerifyState(
 	identityState services.IdentityState,
 	did w3c.DID,
 ) (bool, error) {
-	privateKey, err := crypto.HexToECDSA(r.walletKey)
+	walletAddress, err := r.WalletAddress()
 	if err != nil {
 		return false, err
 	}
 
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return false, errors.New("error casting public key to ECDSA")
-	}
-
-	walletAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-	typedData, err := r.TypedData(primaryType, did, identityState, walletAddress.String())
+	typedData, err := r.TypedData(primaryType, did, identityState, walletAddress)
 	if err != nil {
 		return false, err
 	}
 
-	authData := AuthData{TypedData: typedData, Signature: identityState.Signature, Address: walletAddress.String()}
+	authData := AuthData{TypedData: typedData, Signature: identityState.Signature, Address: walletAddress}
 	return r.verifyTypedData(authData)
 }
 
@@ -387,15 +381,12 @@ func (r *Resolver) signTypedData(primaryType services.PrimaryType, did w3c.DID, 
 		return "", err
 	}
 
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return "", errors.New("error casting public key to ECDSA")
+	walletAddress, err := r.WalletAddress()
+	if err != nil {
+		return "", err
 	}
 
-	walletAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-	typedData, err := r.TypedData(primaryType, did, identityState, walletAddress.String())
+	typedData, err := r.TypedData(primaryType, did, identityState, walletAddress)
 	if err != nil {
 		return "", errors.New("error getting typed data for signing")
 	}

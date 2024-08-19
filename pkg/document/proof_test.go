@@ -89,20 +89,6 @@ func TestEthereumEip712SignatureProof2021_JSONUnmarshal(t *testing.T) {
 		},
 	}
 
-	var primaryType = "IdentityState"
-	walletAddress := "0x5b18eF56aA61eeAE0E3434e3c3d8AEB19b141fe7"
-	state := "444"
-	stateCreatedAtTimestamp := "0"
-	stateReplacedByState := "0"
-	stateReplacedAtTimestamp := "0"
-	gistRootCreatedAtTimestamp := "0"
-	gistRootReplacedByRoot := "0"
-	gistRootReplacedAtTimestamp := "0"
-	timestamp := "0"
-	gistRoot := "555"
-	identity := "19090607534999372304474213543962416547920895595808567155882840509226423042"
-	chainID := 1
-
 	wantProof := EthereumEip712SignatureProof2021{
 		Type:               "EthereumEip712Signature2021",
 		ProofPursopose:     "assertionMethod",
@@ -111,25 +97,25 @@ func TestEthereumEip712SignatureProof2021_JSONUnmarshal(t *testing.T) {
 		Created:            timeParsed,
 		Eip712: apitypes.TypedData{
 			Types:       apiTypes,
-			PrimaryType: primaryType,
+			PrimaryType: "IdentityState",
 			Domain: apitypes.TypedDataDomain{
 				Name:              "StateInfo",
 				Version:           "1",
-				ChainId:           math.NewHexOrDecimal256(int64(chainID)),
+				ChainId:           math.NewHexOrDecimal256(int64(1)),
 				VerifyingContract: "0x0000000000000000000000000000000000000000",
 			},
 			Message: apitypes.TypedDataMessage{
-				"from":                        walletAddress,
-				"timestamp":                   timestamp,
-				"state":                       state,
-				"stateCreatedAtTimestamp":     stateCreatedAtTimestamp,
-				"stateReplacedByState":        stateReplacedByState,
-				"stateReplacedAtTimestamp":    stateReplacedAtTimestamp,
-				"gistRoot":                    gistRoot,
-				"gistRootCreatedAtTimestamp":  gistRootCreatedAtTimestamp,
-				"gistRootReplacedByRoot":      gistRootReplacedByRoot,
-				"gistRootReplacedAtTimestamp": gistRootReplacedAtTimestamp,
-				"identity":                    identity,
+				"from":                        "0x5b18eF56aA61eeAE0E3434e3c3d8AEB19b141fe7",
+				"timestamp":                   "0",
+				"state":                       "444",
+				"stateCreatedAtTimestamp":     "0",
+				"stateReplacedByState":        "0",
+				"stateReplacedAtTimestamp":    "0",
+				"gistRoot":                    "555",
+				"gistRootCreatedAtTimestamp":  "0",
+				"gistRootReplacedByRoot":      "0",
+				"gistRootReplacedAtTimestamp": "0",
+				"identity":                    "19090607534999372304474213543962416547920895595808567155882840509226423042",
 			},
 		},
 	}
