@@ -252,7 +252,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedByRoot:      big.NewInt(0),
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
-				Signature: "0x4640cdda90e9340e4283e5e5d622137ee624142a53a66b98552eae931dab8eb41f25b4c9eae4771be41e7e1dcac364fc2b98cc6adf02586b158c24c3ca36f8af1c",
+				Signature: "0xc3dd18cd87c75fe225a569473f822daf66eed38f6e81dfc6766f4c35f1610ad96c546812eb416cd29f30098e5e9e38db78c4887db517f0569762e9f62227154d1b",
 			},
 		},
 		{
@@ -337,7 +337,7 @@ func TestResolveSignature_Success(t *testing.T) {
 			require.Equal(t, tt.expectedIdentityState, identityState)
 
 			primaryType := services.IdentityStateType
-			if tt.expectedIdentityState.StateInfo == nil {
+			if tt.opts.GistRoot != nil {
 				primaryType = services.GlobalStateType
 			}
 

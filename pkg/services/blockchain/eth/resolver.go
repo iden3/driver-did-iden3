@@ -244,7 +244,7 @@ func (r *Resolver) Resolve(
 	signature := ""
 	if r.walletKey != "" && opts.Signature != "" {
 		primaryType := services.IdentityStateType
-		if stateInfo == nil {
+		if opts.GistRoot != nil {
 			primaryType = services.GlobalStateType
 		}
 		signature, err = r.signTypedData(primaryType, did, identityState)

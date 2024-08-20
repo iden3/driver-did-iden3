@@ -138,7 +138,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	if err == nil && opts.Signature != "" {
 		primaryType := IdentityStateType
-		if identityState.StateInfo == nil {
+		if opts.GistRoot != nil {
 			primaryType = GlobalStateType
 		}
 		eip712TypedData, err := resolver.TypedData(primaryType, *userDID, identityState, walletAddress)
