@@ -56,12 +56,9 @@ var (
 
 var IdentityStateAPITypes = apitypes.Types{
 	"IdentityState": []apitypes.Type{
-		{Name: "from", Type: "address"},
 		{Name: "timestamp", Type: "uint256"},
-		{Name: "identity", Type: "uint256"},
+		{Name: "userID", Type: "uint256"},
 		{Name: "state", Type: "uint256"},
-		{Name: "replacedByState", Type: "uint256"},
-		{Name: "createdAtTimestamp", Type: "uint256"},
 		{Name: "replacedAtTimestamp", Type: "uint256"},
 	},
 	"EIP712Domain": []apitypes.Type{
@@ -74,11 +71,9 @@ var IdentityStateAPITypes = apitypes.Types{
 
 var GlobalStateAPITypes = apitypes.Types{
 	"GlobalState": []apitypes.Type{
-		{Name: "from", Type: "address"},
 		{Name: "timestamp", Type: "uint256"},
+		{Name: "userID", Type: "uint256"},
 		{Name: "root", Type: "uint256"},
-		{Name: "replacedByRoot", Type: "uint256"},
-		{Name: "createdAtTimestamp", Type: "uint256"},
 		{Name: "replacedAtTimestamp", Type: "uint256"},
 	},
 	"EIP712Domain": []apitypes.Type{
@@ -185,52 +180,41 @@ func (r *Resolver) Resolve(
 		err       error
 	)
 
-	if did.IDStrings[2] == "000000000000000000000000000000000000000000" {
-		// If gist root is not provided, it will try to resolve with gist root 0
-		if opts.GistRoot == nil {
-			opts.GistRoot = big.NewInt(0)
-		}
-		gistInfo, err = r.resolveGistRootOnly(ctx, opts.GistRoot)
+	userID, err := core.IDFromDID(did)
+	if err != nil {
+		return services.IdentityState{},
+			fmt.Errorf("invalid did format for did '%s': %v", did, err)
+	}
+
+	switch {
+	case opts.GistRoot != nil:
+		stateInfo, gistInfo, err = r.resolveStateByGistRoot(ctx, userID, opts.GistRoot)
+	case opts.State != nil:
+		stateInfo, err = r.resolveState(ctx, userID, opts.State)
+	default:
+		stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
+	}
+	// err == http.505
+	if err != nil && (!errors.Is(err, services.ErrNotFound) || opts.GistRoot != nil) {
+		return services.IdentityState{}, err
+	}
+
+	if opts.State != nil && errors.Is(err, services.ErrNotFound) {
+		idGen, err := core.CheckGenesisStateID(userID.BigInt(), opts.State)
 		if err != nil {
 			return services.IdentityState{}, err
 		}
-	} else {
-		userID, err := core.IDFromDID(did)
-		if err != nil {
+		if !idGen {
 			return services.IdentityState{},
-				fmt.Errorf("invalid did format for did '%s': %v", did, err)
+				fmt.Errorf("identity '%s' state '%s' is not found and is not genesis", userID.String(), opts.State)
 		}
-
-		switch {
-		case opts.GistRoot != nil:
-			stateInfo, gistInfo, err = r.resolveStateByGistRoot(ctx, userID, opts.GistRoot)
-		case opts.State != nil:
-			stateInfo, err = r.resolveState(ctx, userID, opts.State)
-		default:
-			stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
-		}
-		// err == http.505
-		if err != nil && !errors.Is(err, services.ErrNotFound) {
-			return services.IdentityState{}, err
-		}
-
-		if opts.State != nil && errors.Is(err, services.ErrNotFound) {
-			idGen, err := core.CheckGenesisStateID(userID.BigInt(), opts.State)
-			if err != nil {
-				return services.IdentityState{}, err
-			}
-			if !idGen {
-				return services.IdentityState{},
-					fmt.Errorf("identity '%s' state '%s' is not found and is not genesis", userID.String(), opts.State)
-			}
-			stateInfo = &contract.IStateStateInfo{
-				State:               opts.State,
-				ReplacedByState:     big.NewInt(0),
-				CreatedAtTimestamp:  big.NewInt(0),
-				ReplacedAtTimestamp: big.NewInt(0),
-				CreatedAtBlock:      big.NewInt(0),
-				ReplacedAtBlock:     big.NewInt(0),
-			}
+		stateInfo = &contract.IStateStateInfo{
+			State:               opts.State,
+			ReplacedByState:     big.NewInt(0),
+			CreatedAtTimestamp:  big.NewInt(0),
+			ReplacedAtTimestamp: big.NewInt(0),
+			CreatedAtBlock:      big.NewInt(0),
+			ReplacedAtBlock:     big.NewInt(0),
 		}
 	}
 
@@ -299,33 +283,23 @@ func TimeStampFn() string {
 }
 
 func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, identityState services.IdentityState, walletAddress string) (apitypes.TypedData, error) {
-	identity := "0"
-	if did.IDStrings[2] != "000000000000000000000000000000000000000000" {
-		userID, err := core.IDFromDID(did)
-		if err != nil {
-			return apitypes.TypedData{},
-				fmt.Errorf("invalid did format for did '%s': %v", did, err)
-		}
-		identity = userID.BigInt().String()
+	id, err := core.IDFromDID(did)
+	if err != nil {
+		return apitypes.TypedData{},
+			fmt.Errorf("invalid did format for did '%s': %v", did, err)
 	}
+	userID := id.BigInt().String()
 
 	root := "0"
 	state := "0"
-	createdAtTimestamp := "0"
-	replacedByRoot := "0"
-	replacedByState := "0"
 	replacedAtTimestamp := "0"
 
 	if identityState.StateInfo != nil {
 		state = identityState.StateInfo.State.String()
-		replacedByState = identityState.StateInfo.ReplacedByState.String()
-		createdAtTimestamp = identityState.StateInfo.CreatedAtTimestamp.String()
 		replacedAtTimestamp = identityState.StateInfo.ReplacedAtTimestamp.String()
 	}
 	if identityState.GistInfo != nil {
 		root = identityState.GistInfo.Root.String()
-		replacedByRoot = identityState.GistInfo.ReplacedByRoot.String()
-		createdAtTimestamp = identityState.GistInfo.CreatedAtTimestamp.String()
 		replacedAtTimestamp = identityState.GistInfo.ReplacedAtTimestamp.String()
 	}
 
@@ -339,23 +313,18 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 		primaryTypeString = "IdentityState"
 		apiTypes = IdentityStateAPITypes
 		message = apitypes.TypedDataMessage{
-			"from":                walletAddress,
 			"timestamp":           timestamp,
-			"identity":            identity,
+			"userID":              userID,
 			"state":               state,
-			"replacedByState":     replacedByState,
-			"createdAtTimestamp":  createdAtTimestamp,
 			"replacedAtTimestamp": replacedAtTimestamp,
 		}
 	case services.GlobalStateType:
 		primaryTypeString = "GlobalState"
 		apiTypes = GlobalStateAPITypes
 		message = apitypes.TypedDataMessage{
-			"from":                walletAddress,
 			"timestamp":           timestamp,
+			"userID":              userID,
 			"root":                root,
-			"replacedByRoot":      replacedByRoot,
-			"createdAtTimestamp":  createdAtTimestamp,
 			"replacedAtTimestamp": replacedAtTimestamp,
 		}
 	}

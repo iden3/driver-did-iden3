@@ -207,8 +207,6 @@ func TestNotFoundErr(t *testing.T) {
 }
 
 func TestResolveSignature_Success(t *testing.T) {
-	userEmptyDID, _ := w3c.ParseDID("did:polygonid:polygon:amoy:000000000000000000000000000000000000000000")
-
 	tests := []struct {
 		name                  string
 		opts                  *services.ResolverOpts
@@ -254,7 +252,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedByRoot:      big.NewInt(0),
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
-				Signature: "0x6276946bac246584ed6eaa2d5e43be5147e67cc7aa3b969c82bb9b1670e8de8b7f7410286f25d6bee4330b4bc260286cf8505358ffa29c8e677e4f05d78acf131c",
+				Signature: "0x4640cdda90e9340e4283e5e5d622137ee624142a53a66b98552eae931dab8eb41f25b4c9eae4771be41e7e1dcac364fc2b98cc6adf02586b158c24c3ca36f8af1c",
 			},
 		},
 		{
@@ -281,7 +279,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
 				GistInfo:  nil,
-				Signature: "0xdd07cd99ee8aa853c3e942aa5d57bfb844cae3db35fe29e8fc635ff4b2f5377d4b3c65f270474e6c5931b3d77f536233bc56d63172da8dba188f1f6fa51a10cb1c",
+				Signature: "0xc373a5a9df5c9227af61724bccaacffb117bf96437d9d7c41aff9be9f7662890716f2254dfc750b3768f2afa45843b53a8139264aa79626f4ad351f9390321841c",
 			},
 		},
 		{
@@ -316,33 +314,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedByRoot:      big.NewInt(0),
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
-				Signature: "0xdd07cd99ee8aa853c3e942aa5d57bfb844cae3db35fe29e8fc635ff4b2f5377d4b3c65f270474e6c5931b3d77f536233bc56d63172da8dba188f1f6fa51a10cb1c",
-			},
-		},
-		{
-			name: "resolve only gist",
-			opts: &services.ResolverOpts{
-				GistRoot:  big.NewInt(400),
-				Signature: string(document.EthereumEip712SignatureProof2021Type),
-			},
-			userDID: userEmptyDID,
-			contractMock: func(c *cm.MockStateContract) {
-				latestGist := big.NewInt(400)
-				latestGistInfo := contract.IStateGistRootInfo{Root: big.NewInt(400), CreatedAtTimestamp: big.NewInt(0), ReplacedByRoot: big.NewInt(0), ReplacedAtTimestamp: big.NewInt(0)}
-				c.EXPECT().GetGISTRootInfo(gomock.Any(), latestGist).Return(latestGistInfo, nil)
-			},
-			timeStamp: func() string {
-				return "0"
-			},
-			expectedIdentityState: services.IdentityState{
-				StateInfo: nil,
-				GistInfo: &services.GistInfo{
-					Root:                big.NewInt(400),
-					CreatedAtTimestamp:  big.NewInt(0),
-					ReplacedByRoot:      big.NewInt(0),
-					ReplacedAtTimestamp: big.NewInt(0),
-				},
-				Signature: "0xe64e080d08b948e5303b49288f1ff599df5b21fd20d7a944026a17e69f860e21662538ec1f8cba2f4a76e7c25d0f5cf506dc16bbc3148158ed81dd899528c69f1c",
+				Signature: "0xc373a5a9df5c9227af61724bccaacffb117bf96437d9d7c41aff9be9f7662890716f2254dfc750b3768f2afa45843b53a8139264aa79626f4ad351f9390321841c",
 			},
 		},
 	}
