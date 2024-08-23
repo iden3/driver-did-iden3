@@ -252,7 +252,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedByRoot:      big.NewInt(0),
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
-				Signature: "0xc3dd18cd87c75fe225a569473f822daf66eed38f6e81dfc6766f4c35f1610ad96c546812eb416cd29f30098e5e9e38db78c4887db517f0569762e9f62227154d1b",
+				Signature: "0x388e838580e95a771a10806ea1514ab441e9f598ccca01899dea8541411a631c1d67525c652b1662c51547ea0aad445bc4e9d0fc3d41802221e66b0f534526841b",
 			},
 		},
 		{
@@ -279,7 +279,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
 				GistInfo:  nil,
-				Signature: "0xc373a5a9df5c9227af61724bccaacffb117bf96437d9d7c41aff9be9f7662890716f2254dfc750b3768f2afa45843b53a8139264aa79626f4ad351f9390321841c",
+				Signature: "0x3bf7344312b0ef482974de45c722fbd431316b0bc42bd1050b5cb7bbe53034c51aa885d72c6cd958bdc3b46fc247f38b67c03767d98ba815ae3d8c33aac7398c1c",
 			},
 		},
 		{
@@ -314,7 +314,7 @@ func TestResolveSignature_Success(t *testing.T) {
 					ReplacedByRoot:      big.NewInt(0),
 					ReplacedAtTimestamp: big.NewInt(0),
 				},
-				Signature: "0xc373a5a9df5c9227af61724bccaacffb117bf96437d9d7c41aff9be9f7662890716f2254dfc750b3768f2afa45843b53a8139264aa79626f4ad351f9390321841c",
+				Signature: "0x3bf7344312b0ef482974de45c722fbd431316b0bc42bd1050b5cb7bbe53034c51aa885d72c6cd958bdc3b46fc247f38b67c03767d98ba815ae3d8c33aac7398c1c",
 			},
 		},
 	}

@@ -57,7 +57,7 @@ var (
 var IdentityStateAPITypes = apitypes.Types{
 	"IdentityState": []apitypes.Type{
 		{Name: "timestamp", Type: "uint256"},
-		{Name: "userID", Type: "uint256"},
+		{Name: "id", Type: "uint256"},
 		{Name: "state", Type: "uint256"},
 		{Name: "replacedAtTimestamp", Type: "uint256"},
 	},
@@ -72,7 +72,7 @@ var IdentityStateAPITypes = apitypes.Types{
 var GlobalStateAPITypes = apitypes.Types{
 	"GlobalState": []apitypes.Type{
 		{Name: "timestamp", Type: "uint256"},
-		{Name: "userID", Type: "uint256"},
+		{Name: "idType", Type: "bytes2"},
 		{Name: "root", Type: "uint256"},
 		{Name: "replacedAtTimestamp", Type: "uint256"},
 	},
@@ -288,7 +288,8 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 		return apitypes.TypedData{},
 			fmt.Errorf("invalid did format for did '%s': %v", did, err)
 	}
-	userID := id.BigInt().String()
+	ID := id.BigInt().String()
+	idType := fmt.Sprintf("0x%02X%02X", id.Type()[0], id.Type()[1])
 
 	root := "0"
 	state := "0"
@@ -314,7 +315,7 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 		apiTypes = IdentityStateAPITypes
 		message = apitypes.TypedDataMessage{
 			"timestamp":           timestamp,
-			"userID":              userID,
+			"id":                  ID,
 			"state":               state,
 			"replacedAtTimestamp": replacedAtTimestamp,
 		}
@@ -323,7 +324,7 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 		apiTypes = GlobalStateAPITypes
 		message = apitypes.TypedDataMessage{
 			"timestamp":           timestamp,
-			"userID":              userID,
+			"idType":              idType,
 			"root":                root,
 			"replacedAtTimestamp": replacedAtTimestamp,
 		}
