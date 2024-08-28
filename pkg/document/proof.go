@@ -1,8 +1,6 @@
 package document
 
 import (
-	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -30,32 +28,4 @@ const EthereumEip712SignatureProof2021Type verifiable.ProofType = "EthereumEip71
 
 func (p *EthereumEip712SignatureProof2021) ProofType() verifiable.ProofType {
 	return p.Type
-}
-
-func (p *EthereumEip712SignatureProof2021) UnmarshalJSON(in []byte) error {
-	var obj struct {
-		Type               verifiable.ProofType `json:"type"`
-		ProofPursopose     string               `json:"proofPurpose"`
-		ProofValue         string               `json:"proofValue"`
-		VerificationMethod string               `json:"verificationMethod"`
-		Created            time.Time            `json:"created"`
-		Eip712             json.RawMessage      `json:"eip712"`
-	}
-	err := json.Unmarshal(in, &obj)
-	if err != nil {
-		return err
-	}
-	if obj.Type != EthereumEip712SignatureProof2021Type {
-		return errors.New("invalid proof type")
-	}
-	p.Type = obj.Type
-	err = json.Unmarshal(obj.Eip712, &p.Eip712)
-	if err != nil {
-		return err
-	}
-	p.VerificationMethod = obj.VerificationMethod
-	p.ProofPursopose = obj.ProofPursopose
-	p.ProofValue = obj.ProofValue
-	p.Created = obj.Created
-	return nil
 }

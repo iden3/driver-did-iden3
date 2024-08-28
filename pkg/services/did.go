@@ -134,7 +134,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
-	walletAddress, err := resolver.WalletAddress()
+	walletAddress, err := resolver.GetWalletAddress()
 
 	if err == nil && opts.Signature != "" {
 		primaryType := IdentityStateType

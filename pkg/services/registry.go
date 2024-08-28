@@ -104,7 +104,7 @@ type Resolver interface {
 	Resolve(ctx context.Context, did w3c.DID, opts *ResolverOpts) (IdentityState, error)
 	ResolveGist(ctx context.Context, opts *ResolverOpts) (*GistInfo, error)
 	BlockchainID() string
-	WalletAddress() (string, error)
+	GetWalletAddress() (string, error)
 	TypedData(primaryType PrimaryType, did w3c.DID, identityState IdentityState, walletAddress string) (apitypes.TypedData, error)
 }
 

@@ -48,6 +48,10 @@ type AuthData struct {
 	Address   string
 }
 
+const (
+	secp256k1VValue = 27
+)
+
 var (
 	gistNotFoundException     = "execution reverted: Root does not exist"
 	identityNotFoundException = "execution reverted: Identity does not exist"
@@ -114,7 +118,7 @@ func (r *Resolver) BlockchainID() string {
 	return fmt.Sprintf("%d:%s", r.chainID, r.contractAddress)
 }
 
-func (r *Resolver) WalletAddress() (string, error) {
+func (r *Resolver) GetWalletAddress() (string, error) {
 	if r.walletKey == "" {
 		return "", errors.New("wallet key is not set")
 	}
@@ -242,7 +246,11 @@ func (r *Resolver) Resolve(
 	}
 
 	signature := ""
-	if r.walletKey != "" && opts.Signature != "" {
+	if opts.Signature != "" {
+		if r.walletKey == "" {
+			return services.IdentityState{},
+				errors.New("no wallet key found for generating signature")
+		}
 		primaryType := services.IdentityStateType
 		if opts.GistRoot != nil {
 			primaryType = services.GlobalStateType
@@ -263,7 +271,7 @@ func (r *Resolver) VerifyState(
 	identityState services.IdentityState,
 	did w3c.DID,
 ) (bool, error) {
-	walletAddress, err := r.WalletAddress()
+	walletAddress, err := r.GetWalletAddress()
 	if err != nil {
 		return false, err
 	}
@@ -291,19 +299,6 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 	ID := id.BigInt().String()
 	idType := fmt.Sprintf("0x%02X%02X", id.Type()[0], id.Type()[1])
 
-	root := "0"
-	state := "0"
-	replacedAtTimestamp := "0"
-
-	if identityState.StateInfo != nil {
-		state = identityState.StateInfo.State.String()
-		replacedAtTimestamp = identityState.StateInfo.ReplacedAtTimestamp.String()
-	}
-	if identityState.GistInfo != nil {
-		root = identityState.GistInfo.Root.String()
-		replacedAtTimestamp = identityState.GistInfo.ReplacedAtTimestamp.String()
-	}
-
 	apiTypes := apitypes.Types{}
 	message := apitypes.TypedDataMessage{}
 	primaryTypeString := ""
@@ -311,6 +306,13 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 
 	switch primaryType {
 	case services.IdentityStateType:
+		state := "0"
+		replacedAtTimestamp := "0"
+
+		if identityState.StateInfo != nil {
+			state = identityState.StateInfo.State.String()
+			replacedAtTimestamp = identityState.StateInfo.ReplacedAtTimestamp.String()
+		}
 		primaryTypeString = "IdentityState"
 		apiTypes = IdentityStateAPITypes
 		message = apitypes.TypedDataMessage{
@@ -320,6 +322,13 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 			"replacedAtTimestamp": replacedAtTimestamp,
 		}
 	case services.GlobalStateType:
+		root := "0"
+		replacedAtTimestamp := "0"
+
+		if identityState.GistInfo != nil {
+			root = identityState.GistInfo.Root.String()
+			replacedAtTimestamp = identityState.GistInfo.ReplacedAtTimestamp.String()
+		}
 		primaryTypeString = "GlobalState"
 		apiTypes = GlobalStateAPITypes
 		message = apitypes.TypedDataMessage{
@@ -351,7 +360,7 @@ func (r *Resolver) signTypedData(primaryType services.PrimaryType, did w3c.DID, 
 		return "", err
 	}
 
-	walletAddress, err := r.WalletAddress()
+	walletAddress, err := r.GetWalletAddress()
 	if err != nil {
 		return "", err
 	}
@@ -377,8 +386,8 @@ func (r *Resolver) signTypedData(primaryType services.PrimaryType, did w3c.DID, 
 		return "", err
 	}
 
-	if signature[64] < 27 {
-		signature[64] += 27
+	if signature[64] < secp256k1VValue { // Invalid Ethereum signature (V is not 27 or 28)
+		signature[64] += secp256k1VValue // Transform yellow paper V from 27/28 to 0/1
 	}
 
 	return "0x" + hex.EncodeToString(signature), nil
