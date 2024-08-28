@@ -466,18 +466,6 @@ func (r *Resolver) resolveLatest(
 	return &stateInfo, &gistInfo, verifyContractState(id, stateInfo)
 }
 
-func (r *Resolver) resolveGistRootOnly(
-	ctx context.Context,
-	gistRoot *big.Int,
-) (*contract.IStateGistRootInfo, error) {
-	gistInfo, err := r.state.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, gistRoot)
-	if err = notFoundErr(err); err != nil {
-		return nil, err
-	}
-
-	return &gistInfo, nil
-}
-
 func (r *Resolver) resolveState(
 	ctx context.Context,
 	id core.ID,
