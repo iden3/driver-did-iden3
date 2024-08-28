@@ -199,7 +199,7 @@ func (r *Resolver) Resolve(
 		stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
 	}
 	// err == http.505
-	if err != nil && (!errors.Is(err, services.ErrNotFound) || opts.GistRoot != nil) {
+	if err != nil && (!errors.Is(err, services.ErrNotFound)) {
 		return services.IdentityState{}, err
 	}
 
