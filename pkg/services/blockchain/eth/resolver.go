@@ -48,6 +48,8 @@ type AuthData struct {
 	Address   string
 }
 
+type ResolverOption func(*Resolver)
+
 const (
 	secp256k1VValue = 27
 )
@@ -90,8 +92,17 @@ var GlobalStateAPITypes = apitypes.Types{
 
 var TimeStamp = TimeStampFn
 
+func WithSigner(walletKey string) ResolverOption {
+	return func(r *Resolver) {
+		if walletKey != "" {
+			r.walletKey = walletKey
+			return
+		}
+	}
+}
+
 // NewResolver create new ethereum resolver.
-func NewResolver(url, address, walletKey string) (*Resolver, error) {
+func NewResolver(url string, address string, opts ...ResolverOption) (*Resolver, error) {
 	c, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, err
@@ -104,8 +115,11 @@ func NewResolver(url, address, walletKey string) (*Resolver, error) {
 	resolver := &Resolver{
 		state:           sc,
 		contractAddress: address,
-		walletKey:       walletKey,
 	}
+	for _, opt := range opts {
+		opt(resolver)
+	}
+
 	chainID, err := c.NetworkID(context.Background())
 	if err != nil {
 		return nil, err
@@ -291,13 +305,21 @@ func TimeStampFn() string {
 }
 
 func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, identityState services.IdentityState, walletAddress string) (apitypes.TypedData, error) {
+	if primaryType == services.IdentityStateType && identityState.StateInfo == nil {
+		return apitypes.TypedData{},
+			errors.New("identity state info is required for primary type 'IdentityState'")
+	}
+	if primaryType == services.GlobalStateType && identityState.GistInfo == nil {
+		return apitypes.TypedData{},
+			errors.New("gist info is required for primary type 'GlobalState'")
+	}
 	id, err := core.IDFromDID(did)
 	if err != nil {
 		return apitypes.TypedData{},
 			fmt.Errorf("invalid did format for did '%s': %v", did, err)
 	}
 	ID := id.BigInt().String()
-	idType := fmt.Sprintf("0x%02X%02X", id.Type()[0], id.Type()[1])
+	idType := fmt.Sprintf("0x%X", id.Type())
 
 	apiTypes := apitypes.Types{}
 	message := apitypes.TypedDataMessage{}
@@ -308,11 +330,8 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 	case services.IdentityStateType:
 		state := "0"
 		replacedAtTimestamp := "0"
-
-		if identityState.StateInfo != nil {
-			state = identityState.StateInfo.State.String()
-			replacedAtTimestamp = identityState.StateInfo.ReplacedAtTimestamp.String()
-		}
+		state = identityState.StateInfo.State.String()
+		replacedAtTimestamp = identityState.StateInfo.ReplacedAtTimestamp.String()
 		primaryTypeString = "IdentityState"
 		apiTypes = IdentityStateAPITypes
 		message = apitypes.TypedDataMessage{
@@ -324,11 +343,8 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 	case services.GlobalStateType:
 		root := "0"
 		replacedAtTimestamp := "0"
-
-		if identityState.GistInfo != nil {
-			root = identityState.GistInfo.Root.String()
-			replacedAtTimestamp = identityState.GistInfo.ReplacedAtTimestamp.String()
-		}
+		root = identityState.GistInfo.Root.String()
+		replacedAtTimestamp = identityState.GistInfo.ReplacedAtTimestamp.String()
 		primaryTypeString = "GlobalState"
 		apiTypes = GlobalStateAPITypes
 		message = apitypes.TypedDataMessage{
@@ -346,7 +362,7 @@ func (r *Resolver) TypedData(primaryType services.PrimaryType, did w3c.DID, iden
 			Name:              "StateInfo",
 			Version:           "1",
 			ChainId:           math.NewHexOrDecimal256(int64(0)),
-			VerifyingContract: "0x0000000000000000000000000000000000000000",
+			VerifyingContract: common.Address{}.String(),
 		},
 		Message: message,
 	}
@@ -387,7 +403,7 @@ func (r *Resolver) signTypedData(primaryType services.PrimaryType, did w3c.DID, 
 	}
 
 	if signature[64] < secp256k1VValue { // Invalid Ethereum signature (V is not 27 or 28)
-		signature[64] += secp256k1VValue // Transform yellow paper V from 27/28 to 0/1
+		signature[64] += secp256k1VValue // Transform yellow paper V from 0/1 to 27/28
 	}
 
 	return "0x" + hex.EncodeToString(signature), nil

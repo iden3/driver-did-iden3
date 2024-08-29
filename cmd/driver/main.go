@@ -63,7 +63,8 @@ func initResolvers() *services.ResolverRegistry {
 	for chainName, chainSettings := range rs {
 		for networkName, networkSettings := range chainSettings {
 			prefix := fmt.Sprintf("%s:%s", chainName, networkName)
-			resolver, err := eth.NewResolver(networkSettings.NetworkURL, networkSettings.ContractAddress, networkSettings.WalletKey)
+			resolver, err := eth.NewResolver(networkSettings.NetworkURL, networkSettings.ContractAddress,
+				eth.WithSigner(networkSettings.WalletKey))
 			if err != nil {
 				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
 			}
