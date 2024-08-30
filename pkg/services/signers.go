@@ -5,6 +5,13 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/document"
 )
 
+type TypedDataType int32
+
+const (
+	IdentityStateType TypedDataType = 0
+	GlobalStateType   TypedDataType = 1
+)
+
 type EIP712Signer interface {
 	Sign(typedData apitypes.TypedData) (*document.EthereumEip712SignatureProof2021, error)
 }

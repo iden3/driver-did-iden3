@@ -161,13 +161,13 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 		eip712TypedData := &apitypes.TypedData{}
 		if opts.GistRoot != nil {
-			typedData, err := GetGlobalStateTypedData(*userDID, identityState)
+			typedData, err := getTypedData(GlobalStateType, *userDID, identityState)
 			if err != nil {
 				return nil, fmt.Errorf("invalid typed data for global state: %v", err)
 			}
 			eip712TypedData = &typedData
 		} else {
-			typedData, err := GetIdentityStateTypedData(*userDID, identityState)
+			typedData, err := getTypedData(IdentityStateType, *userDID, identityState)
 			if err != nil {
 				return nil, fmt.Errorf("invalid typed data for identity state: %v", err)
 			}
@@ -184,42 +184,75 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	return didResolution, nil
 }
 
-func GetIdentityStateTypedData(did w3c.DID, identityState IdentityState) (apitypes.TypedData, error) {
-	apiTypes := apitypes.Types{
-		"IdentityState": []apitypes.Type{
-			{Name: "timestamp", Type: "uint256"},
-			{Name: "id", Type: "uint256"},
-			{Name: "state", Type: "uint256"},
-			{Name: "replacedAtTimestamp", Type: "uint256"},
-		},
-		"EIP712Domain": []apitypes.Type{
-			{Name: "name", Type: "string"},
-			{Name: "version", Type: "string"},
-			{Name: "chainId", Type: "uint256"},
-			{Name: "verifyingContract", Type: "address"},
-		},
-	}
-
+func getTypedData(typeDataType TypedDataType, did w3c.DID, identityState IdentityState) (apitypes.TypedData, error) {
 	id, err := core.IDFromDID(did)
 	if err != nil {
 		return apitypes.TypedData{},
 			fmt.Errorf("invalid did format for did '%s': %v", did, err)
 	}
-	ID := id.BigInt().String()
-	timestamp := timeStamp()
-	state := identityState.StateInfo.State.String()
-	replacedAtTimestamp := identityState.GistInfo.ReplacedAtTimestamp.String()
 
-	message := apitypes.TypedDataMessage{
-		"timestamp":           timestamp,
-		"id":                  ID,
-		"state":               state,
-		"replacedAtTimestamp": replacedAtTimestamp,
+	timestamp := timeStamp()
+
+	apiTypes := apitypes.Types{}
+	message := apitypes.TypedDataMessage{}
+	primaryType := ""
+
+	if typeDataType == IdentityStateType {
+		primaryType = "IdentityState"
+		apiTypes = apitypes.Types{
+			"IdentityState": []apitypes.Type{
+				{Name: "timestamp", Type: "uint256"},
+				{Name: "id", Type: "uint256"},
+				{Name: "state", Type: "uint256"},
+				{Name: "replacedAtTimestamp", Type: "uint256"},
+			},
+			"EIP712Domain": []apitypes.Type{
+				{Name: "name", Type: "string"},
+				{Name: "version", Type: "string"},
+				{Name: "chainId", Type: "uint256"},
+				{Name: "verifyingContract", Type: "address"},
+			},
+		}
+		ID := id.BigInt().String()
+		state := identityState.StateInfo.State.String()
+		replacedAtTimestamp := identityState.StateInfo.ReplacedAtTimestamp.String()
+		message = apitypes.TypedDataMessage{
+			"timestamp":           timestamp,
+			"id":                  ID,
+			"state":               state,
+			"replacedAtTimestamp": replacedAtTimestamp,
+		}
+
+	} else {
+		primaryType = "GlobalState"
+		apiTypes = apitypes.Types{
+			"GlobalState": []apitypes.Type{
+				{Name: "timestamp", Type: "uint256"},
+				{Name: "idType", Type: "bytes2"},
+				{Name: "root", Type: "uint256"},
+				{Name: "replacedAtTimestamp", Type: "uint256"},
+			},
+			"EIP712Domain": []apitypes.Type{
+				{Name: "name", Type: "string"},
+				{Name: "version", Type: "string"},
+				{Name: "chainId", Type: "uint256"},
+				{Name: "verifyingContract", Type: "address"},
+			},
+		}
+		idType := fmt.Sprintf("0x%X", id.Type())
+		root := identityState.GistInfo.Root.String()
+		replacedAtTimestamp := identityState.GistInfo.ReplacedAtTimestamp.String()
+		message = apitypes.TypedDataMessage{
+			"timestamp":           timestamp,
+			"idType":              idType,
+			"root":                root,
+			"replacedAtTimestamp": replacedAtTimestamp,
+		}
 	}
 
 	typedData := apitypes.TypedData{
 		Types:       apiTypes,
-		PrimaryType: "IdentityState",
+		PrimaryType: primaryType,
 		Domain: apitypes.TypedDataDomain{
 			Name:              "StateInfo",
 			Version:           "1",
@@ -230,55 +263,6 @@ func GetIdentityStateTypedData(did w3c.DID, identityState IdentityState) (apityp
 	}
 
 	return typedData, nil
-
-}
-
-func GetGlobalStateTypedData(did w3c.DID, identityState IdentityState) (apitypes.TypedData, error) {
-	apiTypes := apitypes.Types{
-		"GlobalState": []apitypes.Type{
-			{Name: "timestamp", Type: "uint256"},
-			{Name: "idType", Type: "bytes2"},
-			{Name: "root", Type: "uint256"},
-			{Name: "replacedAtTimestamp", Type: "uint256"},
-		},
-		"EIP712Domain": []apitypes.Type{
-			{Name: "name", Type: "string"},
-			{Name: "version", Type: "string"},
-			{Name: "chainId", Type: "uint256"},
-			{Name: "verifyingContract", Type: "address"},
-		},
-	}
-	id, err := core.IDFromDID(did)
-	if err != nil {
-		return apitypes.TypedData{},
-			fmt.Errorf("invalid did format for did '%s': %v", did, err)
-	}
-	idType := fmt.Sprintf("0x%X", id.Type())
-	timestamp := timeStamp()
-	root := identityState.GistInfo.Root.String()
-	replacedAtTimestamp := identityState.GistInfo.ReplacedAtTimestamp.String()
-
-	message := apitypes.TypedDataMessage{
-		"timestamp":           timestamp,
-		"idType":              idType,
-		"root":                root,
-		"replacedAtTimestamp": replacedAtTimestamp,
-	}
-
-	typedData := apitypes.TypedData{
-		Types:       apiTypes,
-		PrimaryType: "GlobalState",
-		Domain: apitypes.TypedDataDomain{
-			Name:              "StateInfo",
-			Version:           "1",
-			ChainId:           math.NewHexOrDecimal256(int64(0)),
-			VerifyingContract: common.Address{}.String(),
-		},
-		Message: message,
-	}
-
-	return typedData, nil
-
 }
 
 func timeStamp() string {
