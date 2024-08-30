@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	core "github.com/iden3/go-iden3-core/v2"
@@ -23,6 +27,7 @@ const (
 type DidDocumentServices struct {
 	resolvers *ResolverRegistry
 	ens       *ens.Registry
+	signers   *EIP712SignerRegistry
 }
 
 type ResolverOpts struct {
@@ -31,8 +36,21 @@ type ResolverOpts struct {
 	Signature string
 }
 
-func NewDidDocumentServices(resolvers *ResolverRegistry, registry *ens.Registry) *DidDocumentServices {
-	return &DidDocumentServices{resolvers, registry}
+type DidDocumentOption func(*DidDocumentServices)
+
+func WithSigners(signers *EIP712SignerRegistry) DidDocumentOption {
+	return func(d *DidDocumentServices) {
+		d.signers = signers
+	}
+}
+
+func NewDidDocumentServices(resolvers *ResolverRegistry, registry *ens.Registry, opts ...DidDocumentOption) *DidDocumentServices {
+	didDocumentService := &DidDocumentServices{resolvers, registry, nil}
+
+	for _, opt := range opts {
+		opt(didDocumentService)
+	}
+	return didDocumentService
 }
 
 // GetDidDocument return did document by identifier.
@@ -134,31 +152,138 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
-	walletAddress, err := resolver.GetWalletAddress()
-
-	if err == nil && opts.Signature != "" {
-		primaryType := IdentityStateType
-		if opts.GistRoot != nil {
-			primaryType = GlobalStateType
-		}
-		eip712TypedData, err := resolver.TypedData(primaryType, *userDID, identityState, walletAddress)
+	if opts.Signature != "" {
+		signer, err := d.signers.GetEIP712SignerByNetwork(string(b), string(n))
+		errResolution, err = expectedError(err)
 		if err != nil {
-			return nil, fmt.Errorf("invalid typed data: %v", err)
+			return errResolution, err
 		}
 
-		eip712Proof := &document.EthereumEip712SignatureProof2021{
-			Type:               document.EthereumEip712SignatureProof2021Type,
-			ProofPursopose:     "assertionMethod",
-			ProofValue:         identityState.Signature,
-			VerificationMethod: fmt.Sprintf("did:pkh:eip155:0:%s#blockchainAccountId", walletAddress),
-			Eip712:             eip712TypedData,
-			Created:            time.Now(),
+		eip712TypedData := &apitypes.TypedData{}
+		if opts.GistRoot != nil {
+			typedData, err := GetGlobalStateTypedData(*userDID, identityState)
+			if err != nil {
+				return nil, fmt.Errorf("invalid typed data for global state: %v", err)
+			}
+			eip712TypedData = &typedData
+		} else {
+			typedData, err := GetIdentityStateTypedData(*userDID, identityState)
+			if err != nil {
+				return nil, fmt.Errorf("invalid typed data for identity state: %v", err)
+			}
+			eip712TypedData = &typedData
+		}
+		eip712Proof, err := signer.Sign(*eip712TypedData)
+		if err != nil {
+			return nil, fmt.Errorf("invalid eip712 typed data: %v", err)
 		}
 
 		didResolution.DidResolutionMetadata.Context = document.DidResolutionMetadataSigContext()
 		didResolution.DidResolutionMetadata.Proof = append(didResolution.DidResolutionMetadata.Proof, eip712Proof)
 	}
 	return didResolution, nil
+}
+
+func GetIdentityStateTypedData(did w3c.DID, identityState IdentityState) (apitypes.TypedData, error) {
+	apiTypes := apitypes.Types{
+		"IdentityState": []apitypes.Type{
+			{Name: "timestamp", Type: "uint256"},
+			{Name: "id", Type: "uint256"},
+			{Name: "state", Type: "uint256"},
+			{Name: "replacedAtTimestamp", Type: "uint256"},
+		},
+		"EIP712Domain": []apitypes.Type{
+			{Name: "name", Type: "string"},
+			{Name: "version", Type: "string"},
+			{Name: "chainId", Type: "uint256"},
+			{Name: "verifyingContract", Type: "address"},
+		},
+	}
+
+	id, err := core.IDFromDID(did)
+	if err != nil {
+		return apitypes.TypedData{},
+			fmt.Errorf("invalid did format for did '%s': %v", did, err)
+	}
+	ID := id.BigInt().String()
+	timestamp := timeStamp()
+	state := identityState.StateInfo.State.String()
+	replacedAtTimestamp := identityState.GistInfo.ReplacedAtTimestamp.String()
+
+	message := apitypes.TypedDataMessage{
+		"timestamp":           timestamp,
+		"id":                  ID,
+		"state":               state,
+		"replacedAtTimestamp": replacedAtTimestamp,
+	}
+
+	typedData := apitypes.TypedData{
+		Types:       apiTypes,
+		PrimaryType: "IdentityState",
+		Domain: apitypes.TypedDataDomain{
+			Name:              "StateInfo",
+			Version:           "1",
+			ChainId:           math.NewHexOrDecimal256(int64(0)),
+			VerifyingContract: common.Address{}.String(),
+		},
+		Message: message,
+	}
+
+	return typedData, nil
+
+}
+
+func GetGlobalStateTypedData(did w3c.DID, identityState IdentityState) (apitypes.TypedData, error) {
+	apiTypes := apitypes.Types{
+		"GlobalState": []apitypes.Type{
+			{Name: "timestamp", Type: "uint256"},
+			{Name: "idType", Type: "bytes2"},
+			{Name: "root", Type: "uint256"},
+			{Name: "replacedAtTimestamp", Type: "uint256"},
+		},
+		"EIP712Domain": []apitypes.Type{
+			{Name: "name", Type: "string"},
+			{Name: "version", Type: "string"},
+			{Name: "chainId", Type: "uint256"},
+			{Name: "verifyingContract", Type: "address"},
+		},
+	}
+	id, err := core.IDFromDID(did)
+	if err != nil {
+		return apitypes.TypedData{},
+			fmt.Errorf("invalid did format for did '%s': %v", did, err)
+	}
+	idType := fmt.Sprintf("0x%X", id.Type())
+	timestamp := timeStamp()
+	root := identityState.GistInfo.Root.String()
+	replacedAtTimestamp := identityState.GistInfo.ReplacedAtTimestamp.String()
+
+	message := apitypes.TypedDataMessage{
+		"timestamp":           timestamp,
+		"idType":              idType,
+		"root":                root,
+		"replacedAtTimestamp": replacedAtTimestamp,
+	}
+
+	typedData := apitypes.TypedData{
+		Types:       apiTypes,
+		PrimaryType: "GlobalState",
+		Domain: apitypes.TypedDataDomain{
+			Name:              "StateInfo",
+			Version:           "1",
+			ChainId:           math.NewHexOrDecimal256(int64(0)),
+			VerifyingContract: common.Address{}.String(),
+		},
+		Message: message,
+	}
+
+	return typedData, nil
+
+}
+
+func timeStamp() string {
+	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
+	return timestamp
 }
 
 // ResolveDNSDomain return did document by domain via DNS.

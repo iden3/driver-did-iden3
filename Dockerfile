@@ -19,6 +19,7 @@ RUN CGO_ENABLED=0 go build -o ./driver ./cmd/driver/main.go
 FROM scratch
 
 COPY ./resolvers.settings.yaml /app/resolvers.settings.yaml
+COPY ./signers.settings.yaml /app/signers.settings.yaml
 COPY --from=base /build/driver /app/driver
 COPY --from=base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
@@ -28,4 +29,4 @@ ENV HOST=0.0.0.0
 ENV PORT=8080
 
 # Command to run
-ENTRYPOINT ["/app/driver", "/app/resolvers.settings.yaml"]
+ENTRYPOINT ["/app/driver", "/app/resolvers.settings.yaml", "/app/signers.settings.yaml"]
