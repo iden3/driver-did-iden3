@@ -10,10 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/driver-did-iden3/pkg/app"
 	"github.com/iden3/driver-did-iden3/pkg/app/configs"
+	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
-	"github.com/iden3/driver-did-iden3/pkg/services/signers"
+	"github.com/iden3/driver-did-iden3/pkg/services/provers"
 )
 
 func main() {
@@ -33,10 +34,16 @@ func main() {
 			log.Fatal("can't create registry:", err)
 		}
 	}
+	var proverRegistry *services.DIDResolutionProverRegistry
+	if cfg.WalletKey != "" {
+		proverRegistry, err = initDIDResolutionProverRegistry(*cfg)
+		if err != nil {
+			log.Fatal("can't create registry:", err)
+		}
+	}
 
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r, services.WithSigners(initEIP712Signers())),
-	},
+		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r, services.WithProvers(proverRegistry))},
 	}
 
 	server := http.Server{
@@ -75,28 +82,17 @@ func initResolvers() *services.ResolverRegistry {
 	return resolvers
 }
 
-func initEIP712Signers() *services.EIP712SignerRegistry {
-	var path string
-	if len(os.Args) > 3 {
-		path = os.Args[2]
-	}
-	rs, err := configs.ParseSignersSettings(path)
-	if err != nil {
-		log.Fatal("can't read signers settings:", err)
-	}
-	chainSigners := services.NewChainEIP712Signers()
-	for chainName, chainSettings := range rs {
-		for networkName, networkSettings := range chainSettings {
-			prefix := fmt.Sprintf("%s:%s", chainName, networkName)
-			signer, err := signers.NewEIP712Signer(networkSettings.WalletKey)
-			if err != nil {
-				log.Fatalf("failed configure signer for network '%s': %v", prefix, err)
-			}
-			chainSigners.Add(prefix, signer)
-		}
-	}
+func initDIDResolutionProverRegistry(cfg configs.Config) (*services.DIDResolutionProverRegistry, error) {
 
-	return chainSigners
+	proverRegistry := services.NewDIDResolutionProverRegistry()
+
+	prover, err := provers.NewEIP712Prover(cfg.WalletKey)
+	if err != nil {
+		return nil, err
+	}
+	proverRegistry.Add(document.EthereumEip712SignatureProof2021Type, prover)
+
+	return proverRegistry, nil
 }
 
 func addCORSHeaders(next http.Handler) http.Handler {
