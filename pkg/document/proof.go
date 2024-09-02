@@ -15,7 +15,7 @@ type DidResolutionProofs []DidResolutionProof
 
 type EthereumEip712SignatureProof2021 struct {
 	Type               verifiable.ProofType `json:"type"`
-	ProofPursopose     string               `json:"proofPurpose"`
+	ProofPurpose       string               `json:"proofPurpose"`
 	ProofValue         string               `json:"proofValue"`
 	VerificationMethod string               `json:"verificationMethod"`
 	Created            time.Time            `json:"created"`

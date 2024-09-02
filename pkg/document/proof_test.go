@@ -91,7 +91,7 @@ func TestEthereumEip712SignatureProof2021_JSONUnmarshal(t *testing.T) {
 
 	wantProof := EthereumEip712SignatureProof2021{
 		Type:               "EthereumEip712Signature2021",
-		ProofPursopose:     "assertionMethod",
+		ProofPurpose:       "assertionMethod",
 		ProofValue:         "0xd5e5ffe290a258116a0f7acb4c9a5bbfdd842516061c6a794892b6db05fbd14706de7e189d965bead2ffb23e30d2f6b02ecf764e6fe24be788721049b7e331481c",
 		VerificationMethod: "did:pkh:eip155:1:0x5b18eF56aA61eeAE0E3434e3c3d8AEB19b141fe7#blockchainAccountId",
 		Created:            timeParsed,
