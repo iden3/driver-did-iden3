@@ -146,10 +146,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 			},
 		},
 	)
-	errResolution, err = expectedError(err)
-	if err != nil {
-		return errResolution, err
-	}
+
 	if opts.Signature != "" {
 		if d.provers == nil {
 			return nil, errors.New("provers are not initialized")
