@@ -11,12 +11,16 @@ import (
 )
 
 const defaultPathToResolverSettings = "./resolvers.settings.yaml"
+const defaultPathToSignersSettings = "./signers.settings.yaml"
 
 // ResolverSettings represent settings for resolver.
 type ResolverSettings map[string]map[string]struct {
 	ContractAddress string `yaml:"contractAddress"`
 	NetworkURL      string `yaml:"networkURL"`
-	WalletKey       string `yaml:"walletKey"`
+}
+
+type SignersSettings map[string]map[string]struct {
+	WalletKey string `yaml:"walletKey"`
 }
 
 // Config structure represent yaml config for did driver.
@@ -55,6 +59,29 @@ func ParseResolversSettings(path string) (ResolverSettings, error) {
 	}()
 
 	settings := ResolverSettings{}
+	if err := yaml.NewDecoder(f).Decode(&settings); err != nil {
+		return nil, errors.Errorf("invalid yaml file: %v", settings)
+	}
+
+	return settings, nil
+}
+
+// ParseSignersSettings parse yaml file with signers settings.
+func ParseSignersSettings(path string) (SignersSettings, error) {
+	if path == "" {
+		path = defaultPathToSignersSettings
+	}
+	f, err := os.Open(filepath.Clean(path))
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Println("failed to close setting file:", err)
+		}
+	}()
+
+	settings := SignersSettings{}
 	if err := yaml.NewDecoder(f).Decode(&settings); err != nil {
 		return nil, errors.Errorf("invalid yaml file: %v", settings)
 	}

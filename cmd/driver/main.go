@@ -13,6 +13,7 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
+	"github.com/iden3/driver-did-iden3/pkg/services/signers"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r),
+		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r, services.WithSigners(initEIP712Signers())),
 	},
 	}
 
@@ -63,8 +64,7 @@ func initResolvers() *services.ResolverRegistry {
 	for chainName, chainSettings := range rs {
 		for networkName, networkSettings := range chainSettings {
 			prefix := fmt.Sprintf("%s:%s", chainName, networkName)
-			resolver, err := eth.NewResolver(networkSettings.NetworkURL, networkSettings.ContractAddress,
-				eth.WithSigner(networkSettings.WalletKey))
+			resolver, err := eth.NewResolver(networkSettings.NetworkURL, networkSettings.ContractAddress)
 			if err != nil {
 				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
 			}
@@ -73,4 +73,28 @@ func initResolvers() *services.ResolverRegistry {
 	}
 
 	return resolvers
+}
+
+func initEIP712Signers() *services.EIP712SignerRegistry {
+	var path string
+	if len(os.Args) > 3 {
+		path = os.Args[2]
+	}
+	rs, err := configs.ParseSignersSettings(path)
+	if err != nil {
+		log.Fatal("can't read signers settings:", err)
+	}
+	chainSigners := services.NewChainEIP712Signers()
+	for chainName, chainSettings := range rs {
+		for networkName, networkSettings := range chainSettings {
+			prefix := fmt.Sprintf("%s:%s", chainName, networkName)
+			signer, err := signers.NewEIP712Signer(networkSettings.WalletKey)
+			if err != nil {
+				log.Fatalf("failed configure signer for network '%s': %v", prefix, err)
+			}
+			chainSigners.Add(prefix, signer)
+		}
+	}
+
+	return chainSigners
 }

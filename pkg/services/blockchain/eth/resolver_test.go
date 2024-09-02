@@ -6,18 +6,14 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang/mock/gomock"
 	contract "github.com/iden3/contracts-abi/state/go/abi"
-	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	cm "github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth/contract/mock"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/tyler-smith/go-bip32"
-	"github.com/tyler-smith/go-bip39"
 )
 
 var userDID, _ = w3c.ParseDID("did:polygonid:polygon:amoy:2qY71pSkdCsRetTHbUA4YqG7Hx63Ej2PeiJMzAdJ2V")
@@ -202,148 +198,6 @@ func TestNotFoundErr(t *testing.T) {
 			actualErr := notFoundErr(tt.err)
 			require.ErrorIs(t, actualErr, tt.expectedType)
 			require.Equal(t, tt.expectedMessage, actualErr.Error())
-		})
-	}
-}
-
-func TestResolveSignature_Success(t *testing.T) {
-	tests := []struct {
-		name                  string
-		opts                  *services.ResolverOpts
-		userDID               *w3c.DID
-		contractMock          func(c *cm.MockStateContract)
-		timeStamp             func() string
-		expectedIdentityState services.IdentityState
-	}{
-		{
-			name: "resolve identity state by gist",
-			opts: &services.ResolverOpts{
-				GistRoot:  big.NewInt(1),
-				Signature: string(document.EthereumEip712SignatureProof2021Type),
-			},
-			userDID: userDID,
-			contractMock: func(c *cm.MockStateContract) {
-				proof := contract.IStateGistProof{
-					Root:      big.NewInt(4),
-					Existence: true,
-					Value:     big.NewInt(5),
-				}
-				userID, _ := core.IDFromDID(*userDID)
-				c.EXPECT().GetGISTProofByRoot(gomock.Any(), userID.BigInt(), big.NewInt(1)).Return(proof, nil)
-				gistInfo := contract.IStateGistRootInfo{Root: big.NewInt(555), CreatedAtTimestamp: big.NewInt(0), ReplacedByRoot: big.NewInt(0), ReplacedAtTimestamp: big.NewInt(0)}
-				c.EXPECT().GetGISTRootInfo(gomock.Any(), big.NewInt(4)).Return(gistInfo, nil)
-				stateInfo := contract.IStateStateInfo{Id: userID.BigInt(), State: big.NewInt(444), CreatedAtTimestamp: big.NewInt(0), ReplacedByState: big.NewInt(0), ReplacedAtTimestamp: big.NewInt(0)}
-				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), gomock.Any(), big.NewInt(5)).Return(stateInfo, nil)
-			},
-			timeStamp: func() string {
-				return "0"
-			},
-			expectedIdentityState: services.IdentityState{
-				StateInfo: &services.StateInfo{
-					ID:                  *userDID,
-					State:               big.NewInt(444),
-					CreatedAtTimestamp:  big.NewInt(0),
-					ReplacedByState:     big.NewInt(0),
-					ReplacedAtTimestamp: big.NewInt(0),
-				},
-				GistInfo: &services.GistInfo{
-					Root:                big.NewInt(555),
-					CreatedAtTimestamp:  big.NewInt(0),
-					ReplacedByRoot:      big.NewInt(0),
-					ReplacedAtTimestamp: big.NewInt(0),
-				},
-				Signature: "0x388e838580e95a771a10806ea1514ab441e9f598ccca01899dea8541411a631c1d67525c652b1662c51547ea0aad445bc4e9d0fc3d41802221e66b0f534526841b",
-			},
-		},
-		{
-			name: "resolve identity state by state",
-			opts: &services.ResolverOpts{
-				State:     big.NewInt(1),
-				Signature: string(document.EthereumEip712SignatureProof2021Type),
-			},
-			userDID: userDID,
-			contractMock: func(c *cm.MockStateContract) {
-				userID, _ := core.IDFromDID(*userDID)
-				res := contract.IStateStateInfo{Id: userID.BigInt(), State: big.NewInt(555), CreatedAtTimestamp: big.NewInt(0), ReplacedByState: big.NewInt(0), ReplacedAtTimestamp: big.NewInt(0)}
-				c.EXPECT().GetStateInfoByIdAndState(gomock.Any(), gomock.Any(), big.NewInt(1)).Return(res, nil)
-			},
-			timeStamp: func() string {
-				return "0"
-			},
-			expectedIdentityState: services.IdentityState{
-				StateInfo: &services.StateInfo{
-					ID:                  *userDID,
-					State:               big.NewInt(555),
-					CreatedAtTimestamp:  big.NewInt(0),
-					ReplacedByState:     big.NewInt(0),
-					ReplacedAtTimestamp: big.NewInt(0),
-				},
-				GistInfo:  nil,
-				Signature: "0x3bf7344312b0ef482974de45c722fbd431316b0bc42bd1050b5cb7bbe53034c51aa885d72c6cd958bdc3b46fc247f38b67c03767d98ba815ae3d8c33aac7398c1c",
-			},
-		},
-		{
-			name: "resolve latest state",
-			opts: &services.ResolverOpts{
-				Signature: string(document.EthereumEip712SignatureProof2021Type),
-			},
-			userDID: userDID,
-			contractMock: func(c *cm.MockStateContract) {
-				userID, _ := core.IDFromDID(*userDID)
-				latestGist := big.NewInt(100)
-				c.EXPECT().GetGISTRoot(gomock.Any()).Return(latestGist, nil)
-				latestGistInfo := contract.IStateGistRootInfo{Root: big.NewInt(400), CreatedAtTimestamp: big.NewInt(0), ReplacedByRoot: big.NewInt(0), ReplacedAtTimestamp: big.NewInt(0)}
-				c.EXPECT().GetGISTRootInfo(gomock.Any(), latestGist).Return(latestGistInfo, nil)
-				stateInfo := contract.IStateStateInfo{Id: userID.BigInt(), State: big.NewInt(555), CreatedAtTimestamp: big.NewInt(0), ReplacedByState: big.NewInt(0), ReplacedAtTimestamp: big.NewInt(0)}
-				c.EXPECT().GetStateInfoById(gomock.Any(), userID.BigInt()).Return(stateInfo, nil)
-			},
-			timeStamp: func() string {
-				return "0"
-			},
-			expectedIdentityState: services.IdentityState{
-				StateInfo: &services.StateInfo{
-					ID:                  *userDID,
-					State:               big.NewInt(555),
-					CreatedAtTimestamp:  big.NewInt(0),
-					ReplacedByState:     big.NewInt(0),
-					ReplacedAtTimestamp: big.NewInt(0),
-				},
-				GistInfo: &services.GistInfo{
-					Root:                big.NewInt(400),
-					CreatedAtTimestamp:  big.NewInt(0),
-					ReplacedByRoot:      big.NewInt(0),
-					ReplacedAtTimestamp: big.NewInt(0),
-				},
-				Signature: "0x3bf7344312b0ef482974de45c722fbd431316b0bc42bd1050b5cb7bbe53034c51aa885d72c6cd958bdc3b46fc247f38b67c03767d98ba815ae3d8c33aac7398c1c",
-			},
-		},
-	}
-
-	mnemonic := "rib satisfy drastic trigger trial exclude raccoon wedding then gaze fire hero"
-	seed := bip39.NewSeed(mnemonic, "Secret Passphrase bla bla bla")
-	masterPrivateKey, _ := bip32.NewMasterKey(seed)
-	ecdaPrivateKey := crypto.ToECDSAUnsafe(masterPrivateKey.Key)
-	privateKeyHex := fmt.Sprintf("%x", ecdaPrivateKey.D)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			stateContract := cm.NewMockStateContract(ctrl)
-			tt.contractMock(stateContract)
-			TimeStamp = tt.timeStamp
-			resolver := Resolver{state: stateContract, chainID: 1, walletKey: privateKeyHex}
-			identityState, err := resolver.Resolve(context.Background(), *tt.userDID, tt.opts)
-			require.NoError(t, err)
-			require.Equal(t, tt.expectedIdentityState, identityState)
-
-			primaryType := services.IdentityStateType
-			if tt.opts.GistRoot != nil {
-				primaryType = services.GlobalStateType
-			}
-
-			ok, _ := resolver.VerifyState(primaryType, identityState, *tt.userDID)
-			require.Equal(t, true, ok)
-			ctrl.Finish()
 		})
 	}
 }
