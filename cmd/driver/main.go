@@ -41,7 +41,7 @@ func main() {
 
 	server := http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
-		Handler:           mux.Routes(),
+		Handler:           addCORSHeaders(mux.Routes()),
 		ReadHeaderTimeout: time.Second,
 	}
 	log.Printf("HTTP server start on '%s:%d'\n", cfg.Server.Host, cfg.Server.Port)
@@ -97,4 +97,18 @@ func initEIP712Signers() *services.EIP712SignerRegistry {
 	}
 
 	return chainSigners
+}
+
+func addCORSHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
