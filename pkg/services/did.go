@@ -93,9 +93,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		if !gen {
 			return document.NewDidNotFoundResolution(err.Error()), nil
 		}
-	}
-
-	if err != nil && opts.State != nil {
+	} else if err != nil && opts.State != nil {
 		return document.NewDidNotFoundResolution(err.Error()), nil
 	}
 
