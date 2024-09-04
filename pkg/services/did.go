@@ -157,6 +157,20 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		if opts.GistRoot != nil {
 			stateType = GlobalStateType
 		}
+
+		if opts.State != nil && identityState.StateInfo == nil { // this case is genesis state
+			// fill state info for genesis state to be able to prove it
+			identityState.StateInfo = &StateInfo{
+				ID:                  *userDID,
+				State:               opts.State,
+				ReplacedByState:     big.NewInt(0),
+				CreatedAtTimestamp:  big.NewInt(0),
+				ReplacedAtTimestamp: big.NewInt(0),
+				CreatedAtBlock:      big.NewInt(0),
+				ReplacedAtBlock:     big.NewInt(0),
+			}
+		}
+
 		didResolutionProof, err := prover.Prove(*userDID, identityState, stateType)
 		if err != nil {
 			return nil, err

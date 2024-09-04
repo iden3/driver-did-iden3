@@ -132,25 +132,6 @@ func (r *Resolver) Resolve(
 		return services.IdentityState{}, err
 	}
 
-	if opts.State != nil && errors.Is(err, services.ErrNotFound) {
-		idGen, err := core.CheckGenesisStateID(userID.BigInt(), opts.State)
-		if err != nil {
-			return services.IdentityState{}, err
-		}
-		if !idGen {
-			return services.IdentityState{},
-				fmt.Errorf("identity '%s' state '%s' is not found and is not genesis", userID.String(), opts.State)
-		}
-		stateInfo = &contract.IStateStateInfo{
-			State:               opts.State,
-			ReplacedByState:     big.NewInt(0),
-			CreatedAtTimestamp:  big.NewInt(0),
-			ReplacedAtTimestamp: big.NewInt(0),
-			CreatedAtBlock:      big.NewInt(0),
-			ReplacedAtBlock:     big.NewInt(0),
-		}
-	}
-
 	identityState := services.IdentityState{}
 	if stateInfo != nil {
 		identityState.StateInfo = &services.StateInfo{
