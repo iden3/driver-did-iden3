@@ -17,3 +17,9 @@ Driver for the iden3 DID method
     ```bash
     docker run -p 8080:8080 driver-did-iden3:local
     ```
+    
+    `WALLET_KEY` is only needed for the resolver if it's a trusted resolver that includes signature of EIP712 message when requested in the resolution with `signature=EthereumEip712Signature2021`.
+    In this case you have to run:
+    ```bash
+    docker run -p 8080:8080 -e WALLET_KEY=<your_wallet_key> driver-did-iden3:local
+    ```

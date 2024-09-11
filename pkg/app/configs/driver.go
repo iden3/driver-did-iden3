@@ -20,7 +20,8 @@ type ResolverSettings map[string]map[string]struct {
 
 // Config structure represent yaml config for did driver.
 type Config struct {
-	Server struct {
+	WalletKey string `envconfig:"WALLET_KEY" default:""`
+	Server    struct {
 		Port int    `envconfig:"PORT" default:"8080"`
 		Host string `envconfig:"HOST" default:"localhost"`
 	}

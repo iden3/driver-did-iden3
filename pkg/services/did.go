@@ -22,15 +22,30 @@ const (
 type DidDocumentServices struct {
 	resolvers *ResolverRegistry
 	ens       *ens.Registry
+	provers   *DIDResolutionProverRegistry
 }
 
 type ResolverOpts struct {
-	State    *big.Int
-	GistRoot *big.Int
+	State     *big.Int
+	GistRoot  *big.Int
+	Signature string
 }
 
-func NewDidDocumentServices(resolvers *ResolverRegistry, registry *ens.Registry) *DidDocumentServices {
-	return &DidDocumentServices{resolvers, registry}
+type DidDocumentOption func(*DidDocumentServices)
+
+func WithProvers(provers *DIDResolutionProverRegistry) DidDocumentOption {
+	return func(d *DidDocumentServices) {
+		d.provers = provers
+	}
+}
+
+func NewDidDocumentServices(resolvers *ResolverRegistry, registry *ens.Registry, opts ...DidDocumentOption) *DidDocumentServices {
+	didDocumentService := &DidDocumentServices{resolvers, registry, nil}
+
+	for _, opt := range opts {
+		opt(didDocumentService)
+	}
+	return didDocumentService
 }
 
 // GetDidDocument return did document by identifier.
@@ -78,6 +93,8 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		if !gen {
 			return document.NewDidNotFoundResolution(err.Error()), nil
 		}
+	} else if err != nil && opts.State != nil {
+		return document.NewDidNotFoundResolution(err.Error()), nil
 	}
 
 	info, err := identityState.StateInfo.ToDidRepresentation()
@@ -128,6 +145,40 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
+	if opts.Signature != "" {
+		if d.provers == nil {
+			return nil, errors.New("provers are not initialized")
+		}
+		prover, err := d.provers.GetDIDResolutionProverByProofType(verifiable.ProofType(opts.Signature))
+		if err != nil {
+			return nil, err
+		}
+		stateType := IdentityStateType
+		if opts.GistRoot != nil {
+			stateType = GlobalStateType
+		}
+
+		if opts.State != nil && identityState.StateInfo == nil { // this case is genesis state
+			// fill state info for genesis state to be able to prove it
+			identityState.StateInfo = &StateInfo{
+				ID:                  *userDID,
+				State:               opts.State,
+				ReplacedByState:     big.NewInt(0),
+				CreatedAtTimestamp:  big.NewInt(0),
+				ReplacedAtTimestamp: big.NewInt(0),
+				CreatedAtBlock:      big.NewInt(0),
+				ReplacedAtBlock:     big.NewInt(0),
+			}
+		}
+
+		didResolutionProof, err := prover.Prove(*userDID, identityState, stateType)
+		if err != nil {
+			return nil, err
+		}
+
+		didResolution.DidResolutionMetadata.Context = document.DidResolutionMetadataSigContext()
+		didResolution.DidResolutionMetadata.Proof = append(didResolution.DidResolutionMetadata.Proof, didResolutionProof)
+	}
 	return didResolution, nil
 }
 

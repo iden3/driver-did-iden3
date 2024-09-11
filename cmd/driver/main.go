@@ -10,9 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/driver-did-iden3/pkg/app"
 	"github.com/iden3/driver-did-iden3/pkg/app/configs"
+	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
+	"github.com/iden3/driver-did-iden3/pkg/services/provers"
 )
 
 func main() {
@@ -32,15 +34,21 @@ func main() {
 			log.Fatal("can't create registry:", err)
 		}
 	}
+	var proverRegistry *services.DIDResolutionProverRegistry
+	if cfg.WalletKey != "" {
+		proverRegistry, err = initDIDResolutionProverRegistry(*cfg)
+		if err != nil {
+			log.Fatal("can't create registry:", err)
+		}
+	}
 
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r),
-	},
+		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r, services.WithProvers(proverRegistry))},
 	}
 
 	server := http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
-		Handler:           mux.Routes(),
+		Handler:           addCORSHeaders(mux.Routes()),
 		ReadHeaderTimeout: time.Second,
 	}
 	log.Printf("HTTP server start on '%s:%d'\n", cfg.Server.Host, cfg.Server.Port)
@@ -72,4 +80,31 @@ func initResolvers() *services.ResolverRegistry {
 	}
 
 	return resolvers
+}
+
+func initDIDResolutionProverRegistry(cfg configs.Config) (*services.DIDResolutionProverRegistry, error) {
+
+	proverRegistry := services.NewDIDResolutionProverRegistry()
+
+	prover, err := provers.NewEIP712Prover(cfg.WalletKey)
+	if err != nil {
+		return nil, err
+	}
+	proverRegistry.Add(document.EthereumEip712SignatureProof2021Type, prover)
+
+	return proverRegistry, nil
+}
+
+func addCORSHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

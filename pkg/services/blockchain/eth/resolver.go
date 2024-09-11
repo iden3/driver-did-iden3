@@ -32,6 +32,8 @@ type Resolver struct {
 	chainID         int
 }
 
+type ResolverOption func(*Resolver)
+
 var (
 	gistNotFoundException     = "execution reverted: Root does not exist"
 	identityNotFoundException = "execution reverted: Identity does not exist"
@@ -53,6 +55,7 @@ func NewResolver(url, address string) (*Resolver, error) {
 		state:           sc,
 		contractAddress: address,
 	}
+
 	chainID, err := c.NetworkID(context.Background())
 	if err != nil {
 		return nil, err
@@ -123,6 +126,10 @@ func (r *Resolver) Resolve(
 		stateInfo, err = r.resolveState(ctx, userID, opts.State)
 	default:
 		stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
+	}
+
+	if err != nil && !errors.Is(err, services.ErrNotFound) {
+		return services.IdentityState{}, err
 	}
 
 	identityState := services.IdentityState{}

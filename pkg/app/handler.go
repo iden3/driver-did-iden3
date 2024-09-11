@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-merkletree-sql/v2"
@@ -23,6 +24,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	opts, err := getResolverOpts(
 		r.URL.Query().Get("state"),
 		r.URL.Query().Get("gist"),
+		r.URL.Query().Get("signature"),
 	)
 	if err != nil {
 		log.Println("invalid options query:", err)
@@ -96,7 +98,7 @@ func (d *DidDocumentHandler) GetGist(w http.ResponseWriter, r *http.Request) {
 	gistInfo, err := d.DidDocumentService.GetGist(r.Context(), chain, networkid, nil)
 	if errors.Is(err, services.ErrNetworkIsNotSupported) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, `{"error":"resolver for '%s:%s' network not found"}`, chain, networkid)
+		log.Printf(`{"error":"resolver for '%s:%s' network not found"}`, chain, networkid)
 		return
 	} else if err != nil {
 		log.Printf("failed get info about latest gist from network '%s:%s': %v\n", chain, networkid, err)
@@ -110,7 +112,7 @@ func (d *DidDocumentHandler) GetGist(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getResolverOpts(state, gistRoot string) (ro services.ResolverOpts, err error) {
+func getResolverOpts(state, gistRoot, signature string) (ro services.ResolverOpts, err error) {
 	if state != "" && gistRoot != "" {
 		return ro, errors.New("'state' and 'gist root' cannot be used together")
 	}
@@ -127,6 +129,12 @@ func getResolverOpts(state, gistRoot string) (ro services.ResolverOpts, err erro
 			return ro, fmt.Errorf("invalid gist root format: %v", err)
 		}
 		ro.GistRoot = g.BigInt()
+	}
+	if signature != "" && signature != string(document.EthereumEip712SignatureProof2021Type) {
+		return ro, fmt.Errorf("not supported signature type %s", signature)
+	}
+	if signature != "" {
+		ro.Signature = signature
 	}
 	return
 }

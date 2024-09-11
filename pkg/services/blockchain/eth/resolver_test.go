@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var userDID, _ = w3c.ParseDID("did:polygonid:polygon:mumbai:2qJEaVmT5jBrtgBQ4m7b7bRYzWmvMyDjBZGP24QwvD")
+var userDID, _ = w3c.ParseDID("did:polygonid:polygon:amoy:2qY71pSkdCsRetTHbUA4YqG7Hx63Ej2PeiJMzAdJ2V")
 
 func TestResolveGist_Success(t *testing.T) {
 	tests := []struct {

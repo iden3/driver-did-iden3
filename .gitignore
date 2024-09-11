@@ -22,3 +22,4 @@
 configs/driver.yaml
 .env*
 resolvers.settings.yaml
+test.http

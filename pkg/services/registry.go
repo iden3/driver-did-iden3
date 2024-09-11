@@ -12,7 +12,9 @@ import (
 )
 
 var (
-	ErrNetworkIsNotSupported = errors.New("network is not supported")
+	ErrNetworkIsNotSupported   = errors.New("network is not supported")
+	ErrProofTypeIsNotSupported = errors.New("proof is not supported")
+
 	ErrResolverAlreadyExists = errors.New("resolver already exists")
 
 	ErrNotFound = errors.New("not found")
