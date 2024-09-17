@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"strings"
 
@@ -88,14 +89,27 @@ func (d *DidDocumentHandler) GetByENSDomain(w http.ResponseWriter, r *http.Reque
 
 func (d *DidDocumentHandler) GetGist(w http.ResponseWriter, r *http.Request) {
 	chain := r.URL.Query().Get("chain")
-	networkid := r.URL.Query().Get("networkid")
+	networkid := r.URL.Query().Get("network")
 	if chain == "" || networkid == "" {
 		log.Println("'chain' and 'networkid' should be set")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	gistInfo, err := d.DidDocumentService.GetGist(r.Context(), chain, networkid, nil)
+	gist := r.URL.Query().Get("gist")
+	var opts *services.ResolverOpts
+	if gist != "" {
+		opts = &services.ResolverOpts{}
+		gistRoot, ok := big.NewInt(0).SetString(gist, 10)
+		if !ok {
+			log.Println("invalid gist root format")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		opts.GistRoot = gistRoot
+	}
+
+	gistInfo, err := d.DidDocumentService.GetGist(r.Context(), chain, networkid, opts)
 	if errors.Is(err, services.ErrNetworkIsNotSupported) {
 		w.WriteHeader(http.StatusNotFound)
 		log.Printf(`{"error":"resolver for '%s:%s' network not found"}`, chain, networkid)
