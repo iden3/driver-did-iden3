@@ -158,11 +158,16 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 			stateType = GlobalStateType
 		}
 
-		if opts.State != nil && identityState.StateInfo == nil { // this case is genesis state
+		if stateType == IdentityStateType && ((opts.State != nil && identityState.StateInfo == nil) || !isPublished) { // this case is genesis state
 			// fill state info for genesis state to be able to prove it
+
+			state := opts.State
+			if state == nil {
+				state = big.NewInt(0)
+			}
 			identityState.StateInfo = &StateInfo{
 				ID:                  *userDID,
-				State:               opts.State,
+				State:               state,
 				ReplacedByState:     big.NewInt(0),
 				CreatedAtTimestamp:  big.NewInt(0),
 				ReplacedAtTimestamp: big.NewInt(0),
