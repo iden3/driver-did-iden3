@@ -145,6 +145,10 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
+	if gist != nil {
+		didResolution.DidDocument.Context = append(didResolution.DidDocument.Context.([]string), document.Iden3proofsContext)
+	}
+
 	if opts.Signature != "" {
 		if d.provers == nil {
 			return nil, errors.New("provers are not initialized")

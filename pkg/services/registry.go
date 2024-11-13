@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	contract "github.com/iden3/contracts-abi/state/go/abi"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-merkletree-sql/v2"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
@@ -66,6 +67,7 @@ type GistInfo struct {
 	ReplacedAtTimestamp *big.Int
 	CreatedAtBlock      *big.Int
 	ReplacedAtBlock     *big.Int
+	Proof               *contract.IStateGistProof
 }
 
 func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
@@ -83,6 +85,11 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 		return nil, err
 	}
 
+	siblingsStrArr := make([]string, len(gi.Proof.Siblings))
+	for i, bi := range gi.Proof.Siblings {
+		siblingsStrArr[i] = bi.String()
+	}
+
 	return &verifiable.GistInfo{
 		Root:                rootHash.Hex(),
 		ReplacedByRoot:      replacedHash.Hex(),
@@ -90,6 +97,11 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 		ReplacedAtTimestamp: gi.ReplacedAtTimestamp.String(),
 		CreatedAtBlock:      gi.CreatedAtBlock.String(),
 		ReplacedAtBlock:     gi.ReplacedAtBlock.String(),
+		Proof: verifiable.GistProof{
+			Root:      gi.Proof.Root.String(),
+			Existence: gi.Proof.Existence,
+			Siblings:  siblingsStrArr,
+		},
 	}, nil
 }
 

@@ -19,6 +19,7 @@ import (
 type StateContract interface {
 	GetGISTRoot(opts *bind.CallOpts) (*big.Int, error)
 	GetGISTRootInfo(opts *bind.CallOpts, root *big.Int) (contract.IStateGistRootInfo, error)
+	GetGISTProof(opts *bind.CallOpts, id *big.Int) (contract.IStateGistProof, error)
 	GetGISTProofByRoot(opts *bind.CallOpts, id *big.Int, root *big.Int) (contract.IStateGistProof, error)
 
 	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (contract.IStateStateInfo, error)
@@ -110,6 +111,7 @@ func (r *Resolver) Resolve(
 	var (
 		stateInfo *contract.IStateStateInfo
 		gistInfo  *contract.IStateGistRootInfo
+		gistProof *contract.IStateGistProof
 		err       error
 	)
 
@@ -121,11 +123,11 @@ func (r *Resolver) Resolve(
 
 	switch {
 	case opts.GistRoot != nil:
-		stateInfo, gistInfo, err = r.resolveStateByGistRoot(ctx, userID, opts.GistRoot)
+		stateInfo, gistInfo, gistProof, err = r.resolveStateByGistRoot(ctx, userID, opts.GistRoot)
 	case opts.State != nil:
 		stateInfo, err = r.resolveState(ctx, userID, opts.State)
 	default:
-		stateInfo, gistInfo, err = r.resolveLatest(ctx, userID)
+		stateInfo, gistInfo, gistProof, err = r.resolveLatest(ctx, userID)
 	}
 
 	if err != nil && !errors.Is(err, services.ErrNotFound) {
@@ -152,6 +154,7 @@ func (r *Resolver) Resolve(
 			ReplacedAtTimestamp: gistInfo.ReplacedAtTimestamp,
 			CreatedAtBlock:      gistInfo.CreatedAtBlock,
 			ReplacedAtBlock:     gistInfo.ReplacedAtBlock,
+			Proof:               gistProof,
 		}
 	}
 
@@ -161,22 +164,26 @@ func (r *Resolver) Resolve(
 func (r *Resolver) resolveLatest(
 	ctx context.Context,
 	id core.ID,
-) (*contract.IStateStateInfo, *contract.IStateGistRootInfo, error) {
+) (*contract.IStateStateInfo, *contract.IStateGistRootInfo, *contract.IStateGistProof, error) {
 	latestRootGist, err := r.state.GetGISTRoot(&bind.CallOpts{Context: ctx})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
+	}
+	gistProof, err := r.state.GetGISTProof(&bind.CallOpts{Context: ctx}, id.BigInt())
+	if err != nil {
+		return nil, nil, nil, err
 	}
 	gistInfo, err := r.state.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, latestRootGist)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	stateInfo, err := r.state.GetStateInfoById(&bind.CallOpts{Context: ctx}, id.BigInt())
 	if err = notFoundErr(err); err != nil {
-		return nil, &gistInfo, err
+		return nil, &gistInfo, &gistProof, err
 	}
 
-	return &stateInfo, &gistInfo, verifyContractState(id, stateInfo)
+	return &stateInfo, &gistInfo, &gistProof, verifyContractState(id, stateInfo)
 }
 
 func (r *Resolver) resolveState(
@@ -196,30 +203,30 @@ func (r *Resolver) resolveStateByGistRoot(
 	ctx context.Context,
 	id core.ID,
 	gistRoot *big.Int,
-) (*contract.IStateStateInfo, *contract.IStateGistRootInfo, error) {
+) (*contract.IStateStateInfo, *contract.IStateGistRootInfo, *contract.IStateGistProof, error) {
 	proof, err := r.state.GetGISTProofByRoot(
 		&bind.CallOpts{Context: ctx},
 		id.BigInt(),
 		gistRoot,
 	)
 	if err := notFoundErr(err); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	gistInfo, err := r.state.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, proof.Root)
 	if err = notFoundErr(err); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	if !proof.Existence {
-		return nil, &gistInfo, nil
+		return nil, &gistInfo, &proof, nil
 	}
 
 	stateInfo, err := r.state.GetStateInfoByIdAndState(&bind.CallOpts{Context: ctx}, id.BigInt(), proof.Value)
 	if err = notFoundErr(err); err != nil {
-		return nil, &gistInfo, err
+		return nil, nil, nil, err
 	}
 
-	return &stateInfo, &gistInfo, verifyContractState(id, stateInfo)
+	return &stateInfo, &gistInfo, &proof, verifyContractState(id, stateInfo)
 }
 
 func verifyContractState(id core.ID, state contract.IStateStateInfo) error {
