@@ -12,7 +12,7 @@ jobs:
   test:
     strategy:
       matrix:
-        containers: [ 1.18.3-bullseye ]
+        containers: [ 1.19-bullseye ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
