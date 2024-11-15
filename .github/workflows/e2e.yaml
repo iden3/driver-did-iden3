@@ -21,6 +21,7 @@ jobs:
         run: |
           echo -e "polygon:" > resolvers.settings.yaml
           echo -e "  amoy:" >> resolvers.settings.yaml
+          echo -e "    chainID: 80002 >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ env.STATE_CONTRACT_ADDRESS_POLYGON_AMOY }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.POLYGON_AMOY_NODE_URL }}" >> resolvers.settings.yaml
 
