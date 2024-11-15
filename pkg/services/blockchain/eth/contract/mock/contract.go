@@ -54,6 +54,12 @@ func (m *MockStateContract) GetGISTProof(arg0 *bind.CallOpts, arg1 *big.Int) (co
 	return ret0, ret1
 }
 
+// GetGISTProof indicates an expected call of GetGISTProof.
+func (mr *MockStateContractMockRecorder) GetGISTProof(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGISTProof", reflect.TypeOf((*MockStateContract)(nil).GetGISTProof), arg0, arg1)
+}
+
 // GetGISTProofByRoot indicates an expected call of GetGISTProofByRoot.
 func (mr *MockStateContractMockRecorder) GetGISTProofByRoot(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()

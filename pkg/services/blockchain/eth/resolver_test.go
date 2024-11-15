@@ -70,6 +70,11 @@ func TestResolveGist_Success(t *testing.T) {
 }
 
 func TestResolve_Success(t *testing.T) {
+	proof := contract.IStateGistProof{
+		Root:      big.NewInt(4),
+		Existence: true,
+		Value:     big.NewInt(5),
+	}
 	tests := []struct {
 		name                  string
 		opts                  *services.ResolverOpts
@@ -84,11 +89,6 @@ func TestResolve_Success(t *testing.T) {
 			},
 			userDID: userDID,
 			contractMock: func(c *cm.MockStateContract) {
-				proof := contract.IStateGistProof{
-					Root:      big.NewInt(4),
-					Existence: true,
-					Value:     big.NewInt(5),
-				}
 				userID, _ := core.IDFromDID(*userDID)
 				c.EXPECT().GetGISTProofByRoot(gomock.Any(), userID.BigInt(), big.NewInt(1)).Return(proof, nil)
 				gistInfo := contract.IStateGistRootInfo{Root: big.NewInt(555)}
@@ -102,7 +102,8 @@ func TestResolve_Success(t *testing.T) {
 					State: big.NewInt(444),
 				},
 				GistInfo: &services.GistInfo{
-					Root: big.NewInt(555),
+					Root:  big.NewInt(555),
+					Proof: &proof,
 				},
 			},
 		},
@@ -133,6 +134,7 @@ func TestResolve_Success(t *testing.T) {
 				userID, _ := core.IDFromDID(*userDID)
 				latestGist := big.NewInt(100)
 				c.EXPECT().GetGISTRoot(gomock.Any()).Return(latestGist, nil)
+				c.EXPECT().GetGISTProof(gomock.Any(), userID.BigInt()).Return(proof, nil)
 				latestGistInfo := contract.IStateGistRootInfo{Root: big.NewInt(400)}
 				c.EXPECT().GetGISTRootInfo(gomock.Any(), latestGist).Return(latestGistInfo, nil)
 				stateInfo := contract.IStateStateInfo{Id: userID.BigInt(), State: big.NewInt(555)}
@@ -144,7 +146,8 @@ func TestResolve_Success(t *testing.T) {
 					State: big.NewInt(555),
 				},
 				GistInfo: &services.GistInfo{
-					Root: big.NewInt(400),
+					Root:  big.NewInt(400),
+					Proof: &proof,
 				},
 			},
 		},
