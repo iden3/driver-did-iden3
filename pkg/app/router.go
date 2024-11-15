@@ -14,6 +14,7 @@ func (s *Handlers) Routes() *http.ServeMux {
 
 	mux.HandleFunc("/1.0/identifiers/", s.DidDocumentHandler.Get)
 	mux.HandleFunc("/1.0/gist", s.DidDocumentHandler.GetGist)
+	mux.HandleFunc("/1.0/credential-status/", s.DidDocumentHandler.ResolveCredentialStatus)
 	mux.HandleFunc("/dns/", s.DidDocumentHandler.GetByDNSDomain)
 	mux.HandleFunc("/ens/", s.DidDocumentHandler.GetByENSDomain)
 	mux.HandleFunc("/status", func(w http.ResponseWriter, _ *http.Request) {

@@ -16,6 +16,7 @@ const defaultPathToResolverSettings = "./resolvers.settings.yaml"
 type ResolverSettings map[string]map[string]struct {
 	ContractAddress string `yaml:"contractAddress"`
 	NetworkURL      string `yaml:"networkURL"`
+	ChainID         string `yaml:"chainID"`
 }
 
 // Config structure represent yaml config for did driver.

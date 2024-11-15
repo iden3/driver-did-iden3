@@ -1,12 +1,14 @@
 module github.com/iden3/driver-did-iden3
 
-go 1.18
+go 1.19
 
 require (
-	github.com/ethereum/go-ethereum v1.11.5
+	github.com/ethereum/go-ethereum v1.12.2
 	github.com/golang/mock v1.6.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.1
 	github.com/iden3/go-iden3-core/v2 v2.3.1
+	github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241113162104-5dbe5dad6b88
+	github.com/iden3/merkletree-proof v0.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
@@ -20,10 +22,11 @@ require (
 	github.com/dchest/blake512 v1.0.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/holiman/uint256 v1.2.0 // indirect
-	github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241113162104-5dbe5dad6b88 // indirect
+	github.com/holiman/uint256 v1.2.3 // indirect
+	github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-20230911113809-c58b7e7a69b0 // indirect
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
+	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
 )
 
 require (
@@ -31,7 +34,7 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect

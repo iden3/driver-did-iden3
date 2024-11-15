@@ -11,6 +11,7 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-merkletree-sql/v2"
+	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/pkg/errors"
 )
 
@@ -108,6 +109,33 @@ func (d *DidDocumentHandler) GetGist(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(gistInfo); err != nil {
+		log.Println("failed write response")
+	}
+}
+
+func (d *DidDocumentHandler) ResolveCredentialStatus(w http.ResponseWriter, r *http.Request) {
+	var credentialStatus verifiable.CredentialStatus
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&credentialStatus)
+	if err != nil {
+		log.Printf("failed decode credential status body: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	rawURL := strings.Split(r.URL.Path, "/")
+	issuerDID := rawURL[len(rawURL)-1]
+	status, err := d.DidDocumentService.ResolveCredentialStatus(r.Context(), issuerDID, credentialStatus)
+	if err != nil {
+		log.Printf("failed get credential status: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(status); err != nil {
 		log.Println("failed write response")
 	}
 }

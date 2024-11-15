@@ -1,7 +1,7 @@
 ##
 ## Build did driver
 ##
-FROM golang:1.18-alpine AS base
+FROM golang:1.19-alpine AS base
 
 WORKDIR /build
 
