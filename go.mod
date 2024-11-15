@@ -23,7 +23,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-20230911113809-c58b7e7a69b0 // indirect
-	github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241115111117-74adfd680389 // indirect
+	github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241115142927-28e0b310c9f1 // indirect
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect

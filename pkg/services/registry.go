@@ -95,15 +95,38 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 	}
 
 	if gi.Proof != nil {
-		siblingsStrArr := make([]string, len(gi.Proof.Siblings))
+		siblingsStrArr := make([]*merkletree.Hash, len(gi.Proof.Siblings))
 		for i, bi := range &gi.Proof.Siblings {
-			siblingsStrArr[i] = bi.String()
+			hash, err := merkletree.NewHashFromBigInt(bi)
+			if err != nil {
+				return nil, err
+			}
+			siblingsStrArr[i] = hash
 		}
 
-		gistInfo.Proof = &verifiable.GistProof{
-			Root:      gi.Proof.Root.String(),
-			Existence: gi.Proof.Existence,
-			Siblings:  siblingsStrArr,
+		var nodeAux *merkletree.NodeAux
+		if gi.Proof.AuxValue != nil && gi.Proof.AuxIndex != nil {
+			val, err := merkletree.NewHashFromBigInt(gi.Proof.AuxValue)
+			if err != nil {
+				return nil, err
+			}
+			indx, err := merkletree.NewHashFromBigInt(gi.Proof.AuxIndex)
+			if err != nil {
+				return nil, err
+			}
+			nodeAux = &merkletree.NodeAux{
+				Key:   indx,
+				Value: val,
+			}
+		}
+		mkProof, err := merkletree.NewProofFromData(gi.Proof.Existence, siblingsStrArr, nodeAux)
+		if err != nil {
+			return nil, err
+		}
+
+		gistInfo.Proof = &verifiable.GistInfoProof{
+			Type:  verifiable.Iden3SparseMerkleTreeProofType,
+			Proof: *mkProof,
 		}
 	}
 
