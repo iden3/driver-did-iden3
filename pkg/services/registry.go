@@ -85,24 +85,29 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 		return nil, err
 	}
 
-	siblingsStrArr := make([]string, len(gi.Proof.Siblings))
-	for i, bi := range &gi.Proof.Siblings {
-		siblingsStrArr[i] = bi.String()
-	}
-
-	return &verifiable.GistInfo{
+	gistInfo := &verifiable.GistInfo{
 		Root:                rootHash.Hex(),
 		ReplacedByRoot:      replacedHash.Hex(),
 		CreatedAtTimestamp:  gi.CreatedAtTimestamp.String(),
 		ReplacedAtTimestamp: gi.ReplacedAtTimestamp.String(),
 		CreatedAtBlock:      gi.CreatedAtBlock.String(),
 		ReplacedAtBlock:     gi.ReplacedAtBlock.String(),
-		Proof: verifiable.GistProof{
+	}
+
+	if gi.Proof != nil {
+		siblingsStrArr := make([]string, len(gi.Proof.Siblings))
+		for i, bi := range &gi.Proof.Siblings {
+			siblingsStrArr[i] = bi.String()
+		}
+
+		gistInfo.Proof = &verifiable.GistProof{
 			Root:      gi.Proof.Root.String(),
 			Existence: gi.Proof.Existence,
 			Siblings:  siblingsStrArr,
-		},
-	}, nil
+		}
+	}
+
+	return gistInfo, nil
 }
 
 type Resolver interface {

@@ -86,6 +86,8 @@ github.com/iden3/go-merkletree-sql/v2 v2.0.4 h1:Dp089P3YNX1BE8+T1tKQHWTtnk84Y/Kr
 github.com/iden3/go-merkletree-sql/v2 v2.0.4/go.mod h1:kRhHKYpui5DUsry5RpveP6IC4XMe6iApdV9VChRYuEk=
 github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241113162104-5dbe5dad6b88 h1:N3rYFMBeRZODJfL4lrhfXTBuu2P+umTD1Zw5bEMDh3c=
 github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241113162104-5dbe5dad6b88/go.mod h1:hMqYi4lKOzEGkmCRks/r4Crj8H4G8YaTt8H4jZHzX9Y=
+github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241115111117-74adfd680389 h1:pZWnB0J9h3mCKclqMtNG4MS1Ce+1++ezqAIzPZS/4Kw=
+github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241115111117-74adfd680389/go.mod h1:hMqYi4lKOzEGkmCRks/r4Crj8H4G8YaTt8H4jZHzX9Y=
 github.com/iden3/merkletree-proof v0.3.0 h1:NVlvtUBEgn4Etxxn+RsOmXP/qlI+85BdN8oUDTf3mxI=
 github.com/iden3/merkletree-proof v0.3.0/go.mod h1:+E2sBxMqhcn/fcu0LDGjmk3us+Vr+fxQUiZMxdpbgUE=
 github.com/ipfs/go-cid v0.3.2 h1:OGgOd+JCFM+y1DjWPmVH+2/4POtpDzwcr7VgnB7mZXc=
