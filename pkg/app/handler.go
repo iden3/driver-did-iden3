@@ -122,7 +122,12 @@ func (d *DidDocumentHandler) ResolveCredentialStatus(w http.ResponseWriter, r *h
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.Printf("cannot close http body %v\n", err)
+		}
+	}()
 
 	rawURL := strings.Split(r.URL.Path, "/")
 	issuerDID := rawURL[len(rawURL)-1]

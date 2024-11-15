@@ -86,7 +86,7 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 	}
 
 	siblingsStrArr := make([]string, len(gi.Proof.Siblings))
-	for i, bi := range gi.Proof.Siblings {
+	for i, bi := range &gi.Proof.Siblings {
 		siblingsStrArr[i] = bi.String()
 	}
 
