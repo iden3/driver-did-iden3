@@ -105,7 +105,7 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 		}
 
 		var nodeAux *merkletree.NodeAux
-		if gi.Proof.AuxValue != nil && gi.Proof.AuxIndex != nil {
+		if !gi.Proof.Existence && gi.Proof.AuxExistence {
 			val, err := merkletree.NewHashFromBigInt(gi.Proof.AuxValue)
 			if err != nil {
 				return nil, err
