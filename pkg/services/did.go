@@ -147,7 +147,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
-	if gist != nil {
+	if gist != nil && gist.Proof != nil {
 		didResolution.DidDocument.Context = append(didResolution.DidDocument.Context.([]string), document.Iden3proofsContext)
 	}
 

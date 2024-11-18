@@ -125,11 +125,10 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 		}
 
 		gistInfo.Proof = &verifiable.GistInfoProof{
-			Type:  verifiable.Iden3SparseMerkleTreeProofType,
 			Proof: *mkProof,
+			Type:  verifiable.Iden3SparseMerkleTreeProofType,
 		}
 	}
-
 	return gistInfo, nil
 }
 
