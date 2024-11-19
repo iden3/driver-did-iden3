@@ -95,8 +95,8 @@ func initResolvers() (*services.ResolverRegistry, *revocationReolver.OnChainReso
 			if err != nil {
 				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
 			}
-			ethClients[core.ChainID(chainID)] = ethClient
-			stateContractAddresses[core.ChainID(chainID)] = common.HexToAddress(networkSettings.ContractAddress)
+			ethClients[chainID] = ethClient
+			stateContractAddresses[chainID] = common.HexToAddress(networkSettings.ContractAddress)
 		}
 	}
 	return resolvers, revocationReolver.NewOnChainResolver(ethClients, stateContractAddresses)
