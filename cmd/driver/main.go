@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -92,7 +91,7 @@ func initResolvers() (*services.ResolverRegistry, *revocationReolver.OnChainReso
 			if err != nil {
 				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
 			}
-			chainID, err := strconv.ParseInt(networkSettings.ChainID, 10, 32)
+			chainID, err := core.GetChainID(core.Blockchain(chainName), core.NetworkID(networkName))
 			if err != nil {
 				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
 			}
