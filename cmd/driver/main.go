@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/driver-did-iden3/pkg/app"
 	"github.com/iden3/driver-did-iden3/pkg/app/configs"
@@ -15,6 +16,8 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	"github.com/iden3/driver-did-iden3/pkg/services/provers"
+	core "github.com/iden3/go-iden3-core/v2"
+	revocationReolver "github.com/iden3/merkletree-proof/resolvers"
 )
 
 func main() {
@@ -42,8 +45,9 @@ func main() {
 		}
 	}
 
+	resolvers, revocationResolvers := initResolvers()
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(initResolvers(), r, services.WithProvers(proverRegistry))},
+		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry))},
 	}
 
 	server := http.Server{
@@ -58,7 +62,7 @@ func main() {
 	}
 }
 
-func initResolvers() *services.ResolverRegistry {
+func initResolvers() (*services.ResolverRegistry, *revocationReolver.OnChainResolver) {
 	var path string
 	if len(os.Args) > 2 {
 		path = os.Args[1]
@@ -68,6 +72,12 @@ func initResolvers() *services.ResolverRegistry {
 		log.Fatal("can't read resolver settings:", err)
 	}
 	resolvers := services.NewChainResolvers()
+	var (
+		ethClients             map[core.ChainID]*ethclient.Client
+		stateContractAddresses map[core.ChainID]common.Address
+	)
+	ethClients = make(map[core.ChainID]*ethclient.Client)
+	stateContractAddresses = make(map[core.ChainID]common.Address)
 	for chainName, chainSettings := range rs {
 		for networkName, networkSettings := range chainSettings {
 			prefix := fmt.Sprintf("%s:%s", chainName, networkName)
@@ -76,10 +86,20 @@ func initResolvers() *services.ResolverRegistry {
 				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
 			}
 			resolvers.Add(prefix, resolver)
+
+			ethClient, err := ethclient.Dial(networkSettings.NetworkURL)
+			if err != nil {
+				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
+			}
+			chainID, err := core.GetChainID(core.Blockchain(chainName), core.NetworkID(networkName))
+			if err != nil {
+				log.Fatalf("failed configure resolver for network '%s': %v", prefix, err)
+			}
+			ethClients[chainID] = ethClient
+			stateContractAddresses[chainID] = common.HexToAddress(networkSettings.ContractAddress)
 		}
 	}
-
-	return resolvers
+	return resolvers, revocationReolver.NewOnChainResolver(ethClients, stateContractAddresses)
 }
 
 func initDIDResolutionProverRegistry(cfg configs.Config) (*services.DIDResolutionProverRegistry, error) {
@@ -98,7 +118,7 @@ func initDIDResolutionProverRegistry(cfg configs.Config) (*services.DIDResolutio
 func addCORSHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)

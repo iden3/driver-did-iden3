@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	contract "github.com/iden3/contracts-abi/state/go/abi"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-merkletree-sql/v2"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
@@ -66,6 +67,7 @@ type GistInfo struct {
 	ReplacedAtTimestamp *big.Int
 	CreatedAtBlock      *big.Int
 	ReplacedAtBlock     *big.Int
+	Proof               *contract.IStateGistProof
 }
 
 func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
@@ -83,14 +85,51 @@ func (gi *GistInfo) ToDidRepresentation() (*verifiable.GistInfo, error) {
 		return nil, err
 	}
 
-	return &verifiable.GistInfo{
+	gistInfo := &verifiable.GistInfo{
 		Root:                rootHash.Hex(),
 		ReplacedByRoot:      replacedHash.Hex(),
 		CreatedAtTimestamp:  gi.CreatedAtTimestamp.String(),
 		ReplacedAtTimestamp: gi.ReplacedAtTimestamp.String(),
 		CreatedAtBlock:      gi.CreatedAtBlock.String(),
 		ReplacedAtBlock:     gi.ReplacedAtBlock.String(),
-	}, nil
+	}
+
+	if gi.Proof != nil {
+		siblingsStrArr := make([]*merkletree.Hash, len(gi.Proof.Siblings))
+		for i, bi := range &gi.Proof.Siblings {
+			hash, err := merkletree.NewHashFromBigInt(bi)
+			if err != nil {
+				return nil, err
+			}
+			siblingsStrArr[i] = hash
+		}
+
+		var nodeAux *merkletree.NodeAux
+		if !gi.Proof.Existence && gi.Proof.AuxExistence {
+			val, err := merkletree.NewHashFromBigInt(gi.Proof.AuxValue)
+			if err != nil {
+				return nil, err
+			}
+			indx, err := merkletree.NewHashFromBigInt(gi.Proof.AuxIndex)
+			if err != nil {
+				return nil, err
+			}
+			nodeAux = &merkletree.NodeAux{
+				Key:   indx,
+				Value: val,
+			}
+		}
+		mkProof, err := merkletree.NewProofFromData(gi.Proof.Existence, siblingsStrArr, nodeAux)
+		if err != nil {
+			return nil, err
+		}
+
+		gistInfo.Proof = &verifiable.GistInfoProof{
+			Proof: *mkProof,
+			Type:  verifiable.Iden3SparseMerkleTreeProofType,
+		}
+	}
+	return gistInfo, nil
 }
 
 type Resolver interface {

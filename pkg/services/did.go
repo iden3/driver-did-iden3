@@ -12,6 +12,7 @@ import (
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
+	"github.com/iden3/merkletree-proof/resolvers"
 	"github.com/pkg/errors"
 )
 
@@ -20,9 +21,10 @@ const (
 )
 
 type DidDocumentServices struct {
-	resolvers *ResolverRegistry
-	ens       *ens.Registry
-	provers   *DIDResolutionProverRegistry
+	resolvers                *ResolverRegistry
+	ens                      *ens.Registry
+	provers                  *DIDResolutionProverRegistry
+	revStatusOnChainResolver *resolvers.OnChainResolver
 }
 
 type ResolverOpts struct {
@@ -39,8 +41,8 @@ func WithProvers(provers *DIDResolutionProverRegistry) DidDocumentOption {
 	}
 }
 
-func NewDidDocumentServices(resolvers *ResolverRegistry, registry *ens.Registry, opts ...DidDocumentOption) *DidDocumentServices {
-	didDocumentService := &DidDocumentServices{resolvers, registry, nil}
+func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, opts ...DidDocumentOption) *DidDocumentServices {
+	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver}
 
 	for _, opt := range opts {
 		opt(didDocumentService)
@@ -144,6 +146,10 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 			},
 		},
 	)
+
+	if gist != nil && gist.Proof != nil {
+		didResolution.DidDocument.Context = append(didResolution.DidDocument.Context.([]string), document.Iden3proofsContext)
+	}
 
 	if opts.Signature != "" {
 		if d.provers == nil {
@@ -251,6 +257,16 @@ func (d *DidDocumentServices) GetGist(ctx context.Context, chain, network string
 		return nil, err
 	}
 	return gistInfo.ToDidRepresentation()
+}
+
+// ResolveCredentialStatus return revocation status.
+func (d *DidDocumentServices) ResolveCredentialStatus(ctx context.Context, issuerDid string, credentialStatus verifiable.CredentialStatus) (verifiable.RevocationStatus, error) {
+	did, err := w3c.ParseDID(issuerDid)
+	if err != nil {
+		return verifiable.RevocationStatus{}, err
+	}
+	ctx = verifiable.WithIssuerDID(ctx, did)
+	return d.revStatusOnChainResolver.Resolve(ctx, credentialStatus)
 }
 
 func isPublished(si *StateInfo) bool {
