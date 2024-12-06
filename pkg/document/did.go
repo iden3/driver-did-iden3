@@ -17,11 +17,18 @@ const (
 	StateType                            = "Iden3StateInfo2023"
 	Iden3ResolutionMetadataType          = "Iden3ResolutionMetadata"
 	EcdsaSecp256k1RecoveryMethod2020Type = "EcdsaSecp256k1RecoveryMethod2020"
+
+	TezosMethod2021Type = "TezosMethod2021"
+
+	DefaultDidDocContext = "https://www.w3.org/ns/did/v1"
+
+	BlockchainAccountIdContext              = "https://w3id.org/security#blockchainAccountId"
+	EcdsaSecp256k1RecoveryMethod2020Context = "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020#EcdsaSecp256k1RecoveryMethod2020"
+	TezosMethod2021Context                  = "https://w3id.org/security#TezosMethod2021"
 )
 
 const (
 	defaultContext                = "https://w3id.org/did-resolution/v1"
-	defaultDidDocContext          = "https://www.w3.org/ns/did/v1"
 	iden3Context                  = "https://schema.iden3.io/core/jsonld/auth.jsonld"
 	Iden3proofsContext            = "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld"
 	EcdsaSecp256k1RecoveryContext = "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-2.0.jsonld"
@@ -45,7 +52,7 @@ func NewDidResolution() *DidResolution {
 	return &DidResolution{
 		Context: defaultContext,
 		DidDocument: &verifiable.DIDDocument{
-			Context:            []string{defaultDidDocContext, iden3Context},
+			Context:            []string{DefaultDidDocContext, iden3Context},
 			VerificationMethod: []verifiable.CommonVerificationMethod{},
 		},
 		DidResolutionMetadata: &DidResolutionMetadata{

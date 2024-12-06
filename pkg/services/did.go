@@ -9,6 +9,7 @@ import (
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
+	"github.com/iden3/driver-did-iden3/pkg/services/pkh"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
@@ -25,6 +26,7 @@ type DidDocumentServices struct {
 	ens                      *ens.Registry
 	provers                  *DIDResolutionProverRegistry
 	revStatusOnChainResolver *resolvers.OnChainResolver
+	pkhResolver              *pkh.Resolver
 }
 
 type ResolverOpts struct {
@@ -41,8 +43,8 @@ func WithProvers(provers *DIDResolutionProverRegistry) DidDocumentOption {
 	}
 }
 
-func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, opts ...DidDocumentOption) *DidDocumentServices {
-	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver}
+func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, pkhResolver *pkh.Resolver, opts ...DidDocumentOption) *DidDocumentServices {
+	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, pkhResolver}
 
 	for _, opt := range opts {
 		opt(didDocumentService)
@@ -60,6 +62,10 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	errResolution, err := expectedError(err)
 	if err != nil {
 		return errResolution, err
+	}
+
+	if isPkhDid(did) {
+		return d.ResolvePkhDid(ctx, *userDID)
 	}
 
 	userID, err := core.IDFromDID(*userDID)
@@ -243,6 +249,11 @@ func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain strin
 	return d.GetDidDocument(ctx, did, nil)
 }
 
+// ResolvePkhDid return did document via PKH resolver.
+func (d *DidDocumentServices) ResolvePkhDid(ctx context.Context, did w3c.DID) (*document.DidResolution, error) {
+	return d.pkhResolver.Resolve(ctx, did)
+}
+
 func (d *DidDocumentServices) GetGist(ctx context.Context, chain, network string, opts *ResolverOpts) (*verifiable.GistInfo, error) {
 	if opts == nil {
 		opts = &ResolverOpts{}
@@ -307,6 +318,10 @@ func expectedError(err error) (*document.DidResolution, error) {
 	}
 
 	return nil, err
+}
+
+func isPkhDid(did string) bool {
+	return strings.HasPrefix(did, "did:pkh:")
 }
 
 // after discussion we decided not to include state in verification method id,
