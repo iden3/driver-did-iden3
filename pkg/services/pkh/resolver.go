@@ -34,11 +34,11 @@ func (r *Resolver) Resolve(
 	didString := did.String()
 	parts := strings.Split(didString, ":")
 	namespace := parts[2]
-	vmId := didString + "#blockchainAccountId"
+	vmID := didString + "#blockchainAccountId"
 
 	didResolution := document.NewDidResolution()
 	authentication := verifiable.Authentication{}
-	authentication.ID = vmId
+	authentication.ID = vmID
 	authentication.Type = document.EcdsaSecp256k1RecoveryMethod2020Type
 	authentication.Controller = didString
 	blockchainAccountID, err := getBlockchainAccountID(didString)
@@ -49,20 +49,20 @@ func (r *Resolver) Resolve(
 		Context: []interface{}{
 			document.DefaultDidDocContext,
 			map[string]string{
-				"blockchainAccountId":                         document.BlockchainAccountIdContext,
+				"blockchainAccountId":                         document.BlockchainAccountIDContext,
 				document.EcdsaSecp256k1RecoveryMethod2020Type: document.EcdsaSecp256k1RecoveryMethod2020Context,
 			},
 		},
 		ID:                 didString,
 		VerificationMethod: []verifiable.CommonVerificationMethod{},
 		Authentication:     []verifiable.Authentication{authentication},
-		AssertionMethod:    []interface{}{vmId},
+		AssertionMethod:    []interface{}{vmID},
 	}
 
 	didResolution.DidDocument.VerificationMethod = append(
 		didResolution.DidDocument.VerificationMethod,
 		verifiable.CommonVerificationMethod{
-			ID:                  vmId,
+			ID:                  vmID,
 			Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
 			Controller:          didString,
 			BlockchainAccountID: blockchainAccountID,
@@ -77,28 +77,28 @@ func (r *Resolver) Resolve(
 		didResolution.DidDocument.Context = []interface{}{
 			document.DefaultDidDocContext,
 			map[string]string{
-				"blockchainAccountId":                         document.BlockchainAccountIdContext,
+				"blockchainAccountId":                         document.BlockchainAccountIDContext,
 				document.EcdsaSecp256k1RecoveryMethod2020Type: document.EcdsaSecp256k1RecoveryMethod2020Context,
 				document.TezosMethod2021Type:                  document.TezosMethod2021Context,
 			},
 		}
 
-		tzId := fmt.Sprintf("%s#%s", didString, document.TezosMethod2021Type)
+		tzID := fmt.Sprintf("%s#%s", didString, document.TezosMethod2021Type)
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
 			verifiable.CommonVerificationMethod{
-				ID:                  tzId,
+				ID:                  tzID,
 				Type:                document.TezosMethod2021Type,
 				Controller:          didString,
 				BlockchainAccountID: blockchainAccountID,
 			},
 		)
 		tzAuthentication := verifiable.Authentication{}
-		tzAuthentication.ID = tzId
+		tzAuthentication.ID = tzID
 		tzAuthentication.Type = document.TezosMethod2021Type
 		tzAuthentication.Controller = didString
 		didResolution.DidDocument.Authentication = append(didResolution.DidDocument.Authentication, tzAuthentication)
-		didResolution.DidDocument.AssertionMethod = append(didResolution.DidDocument.AssertionMethod, tzId)
+		didResolution.DidDocument.AssertionMethod = append(didResolution.DidDocument.AssertionMethod, tzID)
 	default:
 		return nil, fmt.Errorf("chain namespace not supported: %s", namespace)
 	}
@@ -110,9 +110,9 @@ func getBlockchainAccountID(did string) (string, error) {
 	if !strings.HasPrefix(did, prefix) {
 		return "", errors.New("invalid DID format: must start with 'did:pkh:'")
 	}
-	blockchainAccountId := strings.TrimPrefix(did, prefix)
-	if blockchainAccountId == "" {
+	blockchainAccountID := strings.TrimPrefix(did, prefix)
+	if blockchainAccountID == "" {
 		return "", errors.New("invalid DID format: missing blockchainAccountId")
 	}
-	return blockchainAccountId, nil
+	return blockchainAccountID, nil
 }

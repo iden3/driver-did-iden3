@@ -22,7 +22,7 @@ const (
 
 	DefaultDidDocContext = "https://www.w3.org/ns/did/v1"
 
-	BlockchainAccountIdContext              = "https://w3id.org/security#blockchainAccountId"
+	BlockchainAccountIDContext              = "https://w3id.org/security#blockchainAccountId"
 	EcdsaSecp256k1RecoveryMethod2020Context = "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020#EcdsaSecp256k1RecoveryMethod2020"
 	TezosMethod2021Context                  = "https://w3id.org/security#TezosMethod2021"
 )
