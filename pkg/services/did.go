@@ -64,7 +64,7 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		return errResolution, err
 	}
 
-	if isPkhDid(did) {
+	if isPkhDid(userDID) {
 		return d.ResolvePkhDid(ctx, *userDID)
 	}
 
@@ -320,8 +320,8 @@ func expectedError(err error) (*document.DidResolution, error) {
 	return nil, err
 }
 
-func isPkhDid(did string) bool {
-	return strings.HasPrefix(did, "did:pkh:")
+func isPkhDid(did *w3c.DID) bool {
+	return strings.HasPrefix(did.String(), "did:pkh:")
 }
 
 // after discussion we decided not to include state in verification method id,
