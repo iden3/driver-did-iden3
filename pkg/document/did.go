@@ -17,11 +17,9 @@ const (
 	StateType                            = "Iden3StateInfo2023"
 	Iden3ResolutionMetadataType          = "Iden3ResolutionMetadata"
 	EcdsaSecp256k1RecoveryMethod2020Type = "EcdsaSecp256k1RecoveryMethod2020"
+	TezosMethod2021Type                  = "TezosMethod2021"
 
-	TezosMethod2021Type = "TezosMethod2021"
-
-	DefaultDidDocContext = "https://www.w3.org/ns/did/v1"
-
+	DefaultDidDocContext                    = "https://www.w3.org/ns/did/v1"
 	BlockchainAccountIDContext              = "https://w3id.org/security#blockchainAccountId"
 	EcdsaSecp256k1RecoveryMethod2020Context = "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020#EcdsaSecp256k1RecoveryMethod2020"
 	TezosMethod2021Context                  = "https://w3id.org/security#TezosMethod2021"
