@@ -7,7 +7,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.1
 	github.com/iden3/go-iden3-core/v2 v2.3.1
-	github.com/iden3/go-schema-processor/v2 v2.5.1-0.20241206172450-24f0ca335edb
+	github.com/iden3/go-schema-processor/v2 v2.5.1
 	github.com/iden3/merkletree-proof v0.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
