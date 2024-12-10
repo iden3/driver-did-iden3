@@ -47,7 +47,7 @@ func (r *Resolver) Resolve(
 	}
 
 	assertionMethod := verifiable.Authentication{}
-	err = assertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("\"%s\"", vmID)))
+	err = assertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("%q", vmID)))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (r *Resolver) Resolve(
 		tzAuthentication.Controller = didString
 
 		tzAssertionMethod := verifiable.Authentication{}
-		err = tzAssertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("\"%s\"", tzID)))
+		err = tzAssertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("%q", tzID)))
 		if err != nil {
 			return nil, err
 		}
