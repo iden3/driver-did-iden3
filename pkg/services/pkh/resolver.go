@@ -45,6 +45,12 @@ func (r *Resolver) Resolve(
 	if err != nil {
 		return nil, err
 	}
+
+	assertionMethod := verifiable.Authentication{}
+	err = assertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("\"%s\"", vmID)))
+	if err != nil {
+		return nil, err
+	}
 	didResolution.DidDocument = &verifiable.DIDDocument{
 		Context: []interface{}{
 			document.DefaultDidDocContext,
@@ -56,7 +62,7 @@ func (r *Resolver) Resolve(
 		ID:                 didString,
 		VerificationMethod: []verifiable.CommonVerificationMethod{},
 		Authentication:     []verifiable.Authentication{authentication},
-		AssertionMethod:    []interface{}{vmID},
+		AssertionMethod:    []verifiable.Authentication{assertionMethod},
 	}
 
 	didResolution.DidDocument.VerificationMethod = append(
@@ -97,8 +103,14 @@ func (r *Resolver) Resolve(
 		tzAuthentication.ID = tzID
 		tzAuthentication.Type = document.TezosMethod2021Type
 		tzAuthentication.Controller = didString
+
+		tzAssertionMethod := verifiable.Authentication{}
+		err = tzAssertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("\"%s\"", tzID)))
+		if err != nil {
+			return nil, err
+		}
 		didResolution.DidDocument.Authentication = append(didResolution.DidDocument.Authentication, tzAuthentication)
-		didResolution.DidDocument.AssertionMethod = append(didResolution.DidDocument.AssertionMethod, tzID)
+		didResolution.DidDocument.AssertionMethod = append(didResolution.DidDocument.AssertionMethod, tzAssertionMethod)
 	default:
 		return nil, fmt.Errorf("chain namespace not supported: %s", namespace)
 	}
