@@ -51,8 +51,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed configure PKH resolver %v", err)
 	}
+
+	thirdPartyDidResolvers := services.ThirdPartyDidResolvers{}
+	thirdPartyDidResolvers["did:pkh"] = pkhResolver
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, pkhResolver, services.WithProvers(proverRegistry))},
+		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers))},
 	}
 
 	server := http.Server{
