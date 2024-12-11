@@ -20,11 +20,18 @@ const (
 	ensResolverKey = "description"
 )
 
+type thirdPartyResolver interface {
+	Resolve(ctx context.Context, did w3c.DID) (*document.DidResolution, error)
+}
+
+type ThirdPartyDidResolvers map[string]thirdPartyResolver
+
 type DidDocumentServices struct {
 	resolvers                *ResolverRegistry
 	ens                      *ens.Registry
 	provers                  *DIDResolutionProverRegistry
 	revStatusOnChainResolver *resolvers.OnChainResolver
+	thirdPartyResolvers      ThirdPartyDidResolvers
 }
 
 type ResolverOpts struct {
@@ -41,8 +48,14 @@ func WithProvers(provers *DIDResolutionProverRegistry) DidDocumentOption {
 	}
 }
 
+func WithThirdPartyDIDResolvers(thirdPartyResolvers ThirdPartyDidResolvers) DidDocumentOption {
+	return func(d *DidDocumentServices) {
+		d.thirdPartyResolvers = thirdPartyResolvers
+	}
+}
+
 func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, opts ...DidDocumentOption) *DidDocumentServices {
-	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver}
+	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil}
 
 	for _, opt := range opts {
 		opt(didDocumentService)
@@ -60,6 +73,13 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	errResolution, err := expectedError(err)
 	if err != nil {
 		return errResolution, err
+	}
+
+	didParts := strings.Split(userDID.String(), ":")
+	didPrefix := fmt.Sprintf("%s:%s", didParts[0], didParts[1])
+	thirdPartyResolver := d.thirdPartyResolvers[didPrefix]
+	if thirdPartyResolver != nil {
+		return thirdPartyResolver.Resolve(ctx, *userDID)
 	}
 
 	userID, err := core.IDFromDID(*userDID)
