@@ -15,6 +15,7 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
+	"github.com/iden3/driver-did-iden3/pkg/services/pkh"
 	"github.com/iden3/driver-did-iden3/pkg/services/provers"
 	core "github.com/iden3/go-iden3-core/v2"
 	revocationReolver "github.com/iden3/merkletree-proof/resolvers"
@@ -46,8 +47,15 @@ func main() {
 	}
 
 	resolvers, revocationResolvers := initResolvers()
+	pkhResolver, err := pkh.NewResolver()
+	if err != nil {
+		log.Fatalf("failed configure PKH resolver %v", err)
+	}
+
+	thirdPartyDidResolvers := services.ThirdPartyDidResolvers{}
+	thirdPartyDidResolvers["did:pkh"] = pkhResolver
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry))},
+		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers))},
 	}
 
 	server := http.Server{

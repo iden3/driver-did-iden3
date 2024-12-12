@@ -1,7 +1,6 @@
 name: e2e driver-did-iden3
 
 on:
-  pull_request:
   workflow_dispatch:
 
 jobs:
