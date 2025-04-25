@@ -6,7 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/golang/mock v1.6.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.1
-	github.com/iden3/go-iden3-core/v2 v2.3.1
+	github.com/iden3/go-iden3-core/v2 v2.3.2
 	github.com/iden3/go-schema-processor/v2 v2.5.2
 	github.com/iden3/merkletree-proof v0.3.0
 	github.com/kelseyhightower/envconfig v1.4.0

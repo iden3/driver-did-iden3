@@ -78,8 +78,8 @@ github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-
 github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-20230911113809-c58b7e7a69b0/go.mod h1:8fkd2xyUG/V7ovpvZRyD2LyK2zZ4ALbgf5vJGyhzKdg=
 github.com/iden3/contracts-abi/state/go/abi v1.0.1 h1:FsaLJSy3NSyJl5k1yfDxc5DhUHRY7Z/UCj0/1YueMrY=
 github.com/iden3/contracts-abi/state/go/abi v1.0.1/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
-github.com/iden3/go-iden3-core/v2 v2.3.1 h1:ytQqiclnVAIWyRKR2LF31hfz4DGRBD6nMjiPILXGSKk=
-github.com/iden3/go-iden3-core/v2 v2.3.1/go.mod h1:8vmG6y8k9VS7iNoxuiKukKbRQFsMyabCc+i8er07zOs=
+github.com/iden3/go-iden3-core/v2 v2.3.2 h1:kZq/TiSUmBKO/mvPUucfFE45ugTW+hXXlGT+Jf6CQTg=
+github.com/iden3/go-iden3-core/v2 v2.3.2/go.mod h1:8vmG6y8k9VS7iNoxuiKukKbRQFsMyabCc+i8er07zOs=
 github.com/iden3/go-iden3-crypto v0.0.17 h1:NdkceRLJo/pI4UpcjVah4lN/a3yzxRUGXqxbWcYh9mY=
 github.com/iden3/go-iden3-crypto v0.0.17/go.mod h1:dLpM4vEPJ3nDHzhWFXDjzkn1qHoBeOT/3UEhXsEsP3E=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4 h1:Dp089P3YNX1BE8+T1tKQHWTtnk84Y/Kr7ZAGTqwscoY=

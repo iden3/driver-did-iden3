@@ -74,6 +74,10 @@ jobs:
           echo -e "  sepolia:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.RPC_LINEA_SEPOLIA }}" >> resolvers.settings.yaml
+          echo -e "billions:" >> resolvers.settings.yaml
+          echo -e "  test:" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    networkURL: ${{ secrets.RPC_BILLIONS_TEST }}" >> resolvers.settings.yaml
 
       - name: Set up Docker Buildx
         id: buildx
