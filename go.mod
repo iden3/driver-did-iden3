@@ -6,8 +6,8 @@ require (
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/golang/mock v1.6.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.1
-	github.com/iden3/go-iden3-core/v2 v2.3.1
-	github.com/iden3/go-schema-processor/v2 v2.5.2
+	github.com/iden3/go-iden3-core/v2 v2.3.2
+	github.com/iden3/go-schema-processor/v2 v2.6.2
 	github.com/iden3/merkletree-proof v0.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
@@ -24,7 +24,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-20230911113809-c58b7e7a69b0 // indirect
-	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f // indirect
+	github.com/piprate/json-gold v0.5.1-0.20241210232033-19254b3ec65b // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
 )
