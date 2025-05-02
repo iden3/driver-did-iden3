@@ -65,6 +65,9 @@ jobs:
           echo -e "  test:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.RPC_BILLIONS_TEST }}" >> resolvers.settings.yaml
+          echo -e "  main:" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    networkURL: ${{ secrets.RPC_BILLIONS_MAIN }}" >> resolvers.settings.yaml
 
       - name: Set up Docker Buildx
         id: buildx
