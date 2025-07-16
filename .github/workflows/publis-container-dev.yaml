@@ -58,7 +58,7 @@ jobs:
           echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.RPC_PRIVADO_MAIN }}" >> resolvers.settings.yaml
           echo -e "  test:" >> resolvers.settings.yaml
-          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    contractAddress: 0xEF75Eb00E6Ac36b5C215aEBe6CD7Bca9b2Eb33be" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.RPC_PRIVADO_TEST }}" >> resolvers.settings.yaml
           echo -e "eth:" >> resolvers.settings.yaml
           echo -e "  main:" >> resolvers.settings.yaml
