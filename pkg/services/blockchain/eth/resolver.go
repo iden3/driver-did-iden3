@@ -236,11 +236,12 @@ func notFoundErr(err error) error {
 		return nil
 	}
 
-	if contract.IsErrRootDoesNotExist(err) {
+	switch {
+	case contract.IsErrRootDoesNotExist(err):
 		return fmt.Errorf("gist %w", services.ErrNotFound)
-	} else if contract.IsErrIdentityDoesNotExist(err) {
+	case contract.IsErrIdentityDoesNotExist(err):
 		return fmt.Errorf("identity %w", services.ErrNotFound)
-	} else if contract.IsErrStateDoesNotExist(err) {
+	case contract.IsErrStateDoesNotExist(err):
 		return fmt.Errorf("state %w", services.ErrNotFound)
 	}
 
