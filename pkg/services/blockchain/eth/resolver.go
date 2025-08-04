@@ -35,12 +35,6 @@ type Resolver struct {
 
 type ResolverOption func(*Resolver)
 
-var (
-	gistNotFoundException     = "execution reverted: Root does not exist"
-	identityNotFoundException = "execution reverted: Identity does not exist"
-	stateNotFoundException    = "execution reverted: State does not exist"
-)
-
 // NewResolver create new ethereum resolver.
 func NewResolver(url, address string) (*Resolver, error) {
 	c, err := ethclient.Dial(url)
@@ -242,12 +236,12 @@ func notFoundErr(err error) error {
 		return nil
 	}
 
-	switch err.Error() {
-	case gistNotFoundException:
+	switch {
+	case contract.IsErrRootDoesNotExist(err):
 		return fmt.Errorf("gist %w", services.ErrNotFound)
-	case identityNotFoundException:
+	case contract.IsErrIdentityDoesNotExist(err):
 		return fmt.Errorf("identity %w", services.ErrNotFound)
-	case stateNotFoundException:
+	case contract.IsErrStateDoesNotExist(err):
 		return fmt.Errorf("state %w", services.ErrNotFound)
 	}
 
