@@ -15,6 +15,7 @@ const (
 	NamespaceTezos  = "tezos"
 	NamespaceEIP155 = "eip155"
 	NamespaceBIP122 = "bip122"
+	NamespaceSolana = "solana"
 )
 
 type Resolver struct {
@@ -33,52 +34,123 @@ func (r *Resolver) Resolve(
 ) (*document.DidResolution, error) {
 	didString := did.String()
 	parts := strings.Split(didString, ":")
+	if len(parts) < 4 {
+		return nil, errors.New("invalid did:pkh format")
+	}
 	namespace := parts[2]
 	vmID := didString + "#blockchainAccountId"
 
-	didResolution := document.NewDidResolution()
-	authentication := verifiable.Authentication{}
-	authentication.ID = vmID
-	authentication.Type = document.EcdsaSecp256k1RecoveryMethod2020Type
-	authentication.Controller = didString
 	blockchainAccountID, err := getBlockchainAccountID(didString)
 	if err != nil {
 		return nil, err
 	}
 
-	assertionMethod := verifiable.Authentication{}
-	err = assertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("%q", vmID)))
-	if err != nil {
-		return nil, err
-	}
+	didResolution := document.NewDidResolution()
+
 	didResolution.DidDocument = &verifiable.DIDDocument{
 		Context: []interface{}{
+			document.DefaultDidDocContext,
+			map[string]string{
+				"blockchainAccountId": document.BlockchainAccountIDContext,
+			},
+		},
+		ID:                 didString,
+		VerificationMethod: []verifiable.CommonVerificationMethod{},
+		Authentication:     []verifiable.Authentication{},
+		AssertionMethod:    []verifiable.Authentication{},
+	}
+
+	switch namespace {
+	case NamespaceEIP155:
+		didResolution.DidDocument.Context = []interface{}{
 			document.DefaultDidDocContext,
 			map[string]string{
 				"blockchainAccountId":                         document.BlockchainAccountIDContext,
 				document.EcdsaSecp256k1RecoveryMethod2020Type: document.EcdsaSecp256k1RecoveryMethod2020Context,
 			},
-		},
-		ID:                 didString,
-		VerificationMethod: []verifiable.CommonVerificationMethod{},
-		Authentication:     []verifiable.Authentication{authentication},
-		AssertionMethod:    []verifiable.Authentication{assertionMethod},
-	}
+		}
+		didResolution.DidDocument.VerificationMethod = append(
+			didResolution.DidDocument.VerificationMethod,
+			verifiable.CommonVerificationMethod{
+				ID:                  vmID,
+				Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
+				Controller:          didString,
+				BlockchainAccountID: blockchainAccountID,
+			},
+		)
 
-	didResolution.DidDocument.VerificationMethod = append(
-		didResolution.DidDocument.VerificationMethod,
-		verifiable.CommonVerificationMethod{
-			ID:                  vmID,
-			Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
-			Controller:          didString,
-			BlockchainAccountID: blockchainAccountID,
-		},
-	)
+		auth := verifiable.Authentication{
+			CommonVerificationMethod: verifiable.CommonVerificationMethod{
+				ID:         vmID,
+				Type:       document.EcdsaSecp256k1RecoveryMethod2020Type,
+				Controller: didString,
+			},
+		}
+		didResolution.DidDocument.Authentication = append(didResolution.DidDocument.Authentication, auth)
 
-	switch namespace {
-	case NamespaceEIP155:
+		var asrt verifiable.Authentication
+		if err := asrt.UnmarshalJSON([]byte(fmt.Sprintf("%q", vmID))); err != nil {
+			return nil, err
+		}
+		didResolution.DidDocument.AssertionMethod = append(didResolution.DidDocument.AssertionMethod, asrt)
+
 	case NamespaceBIP122:
 		break
+	case NamespaceSolana:
+		didResolution.DidDocument.Context = []interface{}{
+			document.DefaultDidDocContext,
+			map[string]string{
+				"blockchainAccountId":                   document.BlockchainAccountIDContext,
+				document.Ed25519VerificationKey2020Type: document.Ed25519VerificationKey2020Context,
+				document.SolanaMethod2021Type:           document.SolanaMethod2021Context,
+			},
+		}
+		didResolution.DidDocument.VerificationMethod = append(
+			didResolution.DidDocument.VerificationMethod,
+			verifiable.CommonVerificationMethod{
+				ID:                  vmID,
+				Type:                document.Ed25519VerificationKey2020Type,
+				Controller:          didString,
+				BlockchainAccountID: blockchainAccountID,
+			},
+		)
+		solID := fmt.Sprintf("%s#%s", didString, document.SolanaMethod2021Type)
+		didResolution.DidDocument.VerificationMethod = append(
+			didResolution.DidDocument.VerificationMethod,
+			verifiable.CommonVerificationMethod{
+				ID:                  solID,
+				Type:                document.SolanaMethod2021Type,
+				Controller:          didString,
+				BlockchainAccountID: blockchainAccountID,
+			},
+		)
+		didResolution.DidDocument.Authentication = append(
+			didResolution.DidDocument.Authentication,
+			verifiable.Authentication{
+				CommonVerificationMethod: verifiable.CommonVerificationMethod{
+					ID:         vmID,
+					Type:       document.Ed25519VerificationKey2020Type,
+					Controller: didString,
+				},
+			},
+			verifiable.Authentication{
+				CommonVerificationMethod: verifiable.CommonVerificationMethod{
+					ID:         solID,
+					Type:       document.SolanaMethod2021Type,
+					Controller: didString,
+				},
+			},
+		)
+		var asrt1, asrt2 verifiable.Authentication
+		if err := asrt1.UnmarshalJSON([]byte(fmt.Sprintf("%q", vmID))); err != nil {
+			return nil, err
+		}
+		if err := asrt2.UnmarshalJSON([]byte(fmt.Sprintf("%q", solID))); err != nil {
+			return nil, err
+		}
+		didResolution.DidDocument.AssertionMethod = append(
+			didResolution.DidDocument.AssertionMethod, asrt1, asrt2,
+		)
 	case NamespaceTezos:
 		didResolution.DidDocument.Context = []interface{}{
 			document.DefaultDidDocContext,
