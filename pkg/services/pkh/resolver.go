@@ -104,6 +104,7 @@ func (r *Resolver) Resolve(
 				"blockchainAccountId":                   document.BlockchainAccountIDContext,
 				document.Ed25519VerificationKey2020Type: document.Ed25519VerificationKey2020Context,
 				document.SolanaMethod2021Type:           document.SolanaMethod2021Context,
+				document.PublicKeyMultibaseType:         document.PublicKeyMultibaseContext,
 			},
 		}
 		didResolution.DidDocument.VerificationMethod = append(
