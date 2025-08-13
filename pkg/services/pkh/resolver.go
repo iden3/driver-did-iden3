@@ -69,22 +69,20 @@ func (r *Resolver) Resolve(
 				document.EcdsaSecp256k1RecoveryMethod2020Type: document.EcdsaSecp256k1RecoveryMethod2020Context,
 			},
 		}
+
+		ecdsaSecp256k1VM := verifiable.CommonVerificationMethod{
+			ID:                  vmID,
+			Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
+			Controller:          didString,
+			BlockchainAccountID: blockchainAccountID,
+		}
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
-			verifiable.CommonVerificationMethod{
-				ID:                  vmID,
-				Type:                document.EcdsaSecp256k1RecoveryMethod2020Type,
-				Controller:          didString,
-				BlockchainAccountID: blockchainAccountID,
-			},
+			ecdsaSecp256k1VM,
 		)
 
 		auth := verifiable.Authentication{
-			CommonVerificationMethod: verifiable.CommonVerificationMethod{
-				ID:         vmID,
-				Type:       document.EcdsaSecp256k1RecoveryMethod2020Type,
-				Controller: didString,
-			},
+			CommonVerificationMethod: ecdsaSecp256k1VM,
 		}
 		didResolution.DidDocument.Authentication = append(didResolution.DidDocument.Authentication, auth)
 
@@ -106,40 +104,33 @@ func (r *Resolver) Resolve(
 				document.SolanaMethod2021Type: document.SolanaMethod2021Context,
 			},
 		}
-		didResolution.DidDocument.VerificationMethod = append(
-			didResolution.DidDocument.VerificationMethod,
-			verifiable.CommonVerificationMethod{
-				ID:                 vmID,
-				Type:               document.Ed25519VerificationKey2020Type,
-				Controller:         didString,
-				PublicKeyMultibase: publicKeyMultibase,
-			},
-		)
+		ed25519VM := verifiable.CommonVerificationMethod{
+			ID:                 vmID,
+			Type:               document.Ed25519VerificationKey2020Type,
+			Controller:         didString,
+			PublicKeyMultibase: publicKeyMultibase,
+		}
 		solID := fmt.Sprintf("%s#%s", didString, document.SolanaMethod2021Type)
+		solanaMethod2021VM := verifiable.CommonVerificationMethod{
+			ID:                  solID,
+			Type:                document.SolanaMethod2021Type,
+			Controller:          didString,
+			BlockchainAccountID: blockchainAccountID,
+		}
+
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
-			verifiable.CommonVerificationMethod{
-				ID:                  solID,
-				Type:                document.SolanaMethod2021Type,
-				Controller:          didString,
-				BlockchainAccountID: blockchainAccountID,
-			},
+			ed25519VM,
+			solanaMethod2021VM,
 		)
+
 		didResolution.DidDocument.Authentication = append(
 			didResolution.DidDocument.Authentication,
 			verifiable.Authentication{
-				CommonVerificationMethod: verifiable.CommonVerificationMethod{
-					ID:         vmID,
-					Type:       document.Ed25519VerificationKey2020Type,
-					Controller: didString,
-				},
+				CommonVerificationMethod: ed25519VM,
 			},
 			verifiable.Authentication{
-				CommonVerificationMethod: verifiable.CommonVerificationMethod{
-					ID:         solID,
-					Type:       document.SolanaMethod2021Type,
-					Controller: didString,
-				},
+				CommonVerificationMethod: solanaMethod2021VM,
 			},
 		)
 		var asrt1, asrt2 verifiable.Authentication
@@ -163,20 +154,19 @@ func (r *Resolver) Resolve(
 		}
 
 		tzID := fmt.Sprintf("%s#%s", didString, document.TezosMethod2021Type)
+		tezosVM := verifiable.CommonVerificationMethod{
+			ID:                  tzID,
+			Type:                document.TezosMethod2021Type,
+			Controller:          didString,
+			BlockchainAccountID: blockchainAccountID,
+		}
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
-			verifiable.CommonVerificationMethod{
-				ID:                  tzID,
-				Type:                document.TezosMethod2021Type,
-				Controller:          didString,
-				BlockchainAccountID: blockchainAccountID,
-			},
+			tezosVM,
 		)
-		tzAuthentication := verifiable.Authentication{}
-		tzAuthentication.ID = tzID
-		tzAuthentication.Type = document.TezosMethod2021Type
-		tzAuthentication.Controller = didString
-
+		tzAuthentication := verifiable.Authentication{
+			CommonVerificationMethod: tezosVM,
+		}
 		tzAssertionMethod := verifiable.Authentication{}
 		err = tzAssertionMethod.UnmarshalJSON([]byte(fmt.Sprintf("%q", tzID)))
 		if err != nil {
