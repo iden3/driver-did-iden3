@@ -100,11 +100,10 @@ func (r *Resolver) Resolve(
 		publicKeyMultibase := parts[4]
 		didResolution.DidDocument.Context = []interface{}{
 			document.DefaultDidDocContext,
+			document.Ed25519_2020Context,
 			map[string]string{
-				"blockchainAccountId":                   document.BlockchainAccountIDContext,
-				document.Ed25519VerificationKey2020Type: document.Ed25519VerificationKey2020Context,
-				document.SolanaMethod2021Type:           document.SolanaMethod2021Context,
-				document.PublicKeyMultibaseType:         document.PublicKeyMultibaseContext,
+				"blockchainAccountId":         document.BlockchainAccountIDContext,
+				document.SolanaMethod2021Type: document.SolanaMethod2021Context,
 			},
 		}
 		didResolution.DidDocument.VerificationMethod = append(

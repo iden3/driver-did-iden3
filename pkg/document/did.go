@@ -28,8 +28,7 @@ const (
 	Ed25519VerificationKey2020Context = "https://w3id.org/security#Ed25519VerificationKey2020"
 	SolanaMethod2021Type              = "SolanaMethod2021"
 	SolanaMethod2021Context           = "https://w3id.org/security#SolanaMethod2021"
-	PublicKeyMultibaseType            = "publicKeyMultibase"
-	PublicKeyMultibaseContext         = "https://w3id.org/security#publicKeyMultibase"
+	Ed25519_2020Context               = "https://w3id.org/security/suites/ed25519-2020/v1"
 )
 
 const (
