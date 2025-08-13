@@ -23,6 +23,11 @@ const (
 	BlockchainAccountIDContext              = "https://w3id.org/security#blockchainAccountId"
 	EcdsaSecp256k1RecoveryMethod2020Context = "https://identity.foundation/EcdsaSecp256k1RecoverySignature2020#EcdsaSecp256k1RecoveryMethod2020"
 	TezosMethod2021Context                  = "https://w3id.org/security#TezosMethod2021"
+
+	Ed25519VerificationKey2020Type    = "Ed25519VerificationKey2020"
+	Ed25519VerificationKey2020Context = "https://w3id.org/security/suites/ed25519-2020/v1"
+	SolanaMethod2021Type              = "SolanaMethod2021"
+	SolanaMethod2021Context           = "https://w3id.org/security#SolanaMethod2021"
 )
 
 const (
