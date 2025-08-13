@@ -97,6 +97,7 @@ func (r *Resolver) Resolve(
 	case NamespaceBIP122:
 		break
 	case NamespaceSolana:
+		publicKeyMultibase := parts[4]
 		didResolution.DidDocument.Context = []interface{}{
 			document.DefaultDidDocContext,
 			map[string]string{
@@ -108,10 +109,10 @@ func (r *Resolver) Resolve(
 		didResolution.DidDocument.VerificationMethod = append(
 			didResolution.DidDocument.VerificationMethod,
 			verifiable.CommonVerificationMethod{
-				ID:                  vmID,
-				Type:                document.Ed25519VerificationKey2020Type,
-				Controller:          didString,
-				BlockchainAccountID: blockchainAccountID,
+				ID:                 vmID,
+				Type:               document.Ed25519VerificationKey2020Type,
+				Controller:         didString,
+				PublicKeyMultibase: publicKeyMultibase,
 			},
 		)
 		solID := fmt.Sprintf("%s#%s", didString, document.SolanaMethod2021Type)

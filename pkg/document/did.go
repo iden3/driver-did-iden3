@@ -53,7 +53,6 @@ type DidResolution struct {
 // NewDidResolution create did resolution with default values.
 func NewDidResolution() *DidResolution {
 	return &DidResolution{
-		Context: defaultContext,
 		DidDocument: &verifiable.DIDDocument{
 			Context:            []string{DefaultDidDocContext, iden3Context},
 			VerificationMethod: []verifiable.CommonVerificationMethod{},
