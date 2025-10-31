@@ -27,6 +27,9 @@ func NewAdditionalSourceResolver(url string, client *http.Client) (*AdditionalSo
 	if url == "" {
 		return nil, errors.New("url is empty")
 	}
+	if client == nil {
+		return nil, errors.New("http client is nil")
+	}
 	return &AdditionalSourceResolver{
 		URL:    url,
 		client: client,
@@ -34,7 +37,7 @@ func NewAdditionalSourceResolver(url string, client *http.Client) (*AdditionalSo
 }
 
 func (r AdditionalSourceResolver) ResolveAndMerge(ctx context.Context, did w3c.DID, originalResolution *document.DidResolution) (*document.DidResolution, error) {
-	fullURL := fmt.Sprintf("%s/%s", r.URL, did.String())
+	fullURL := joinBaseURL(r.URL, did.String())
 
 	additionalResolution, err := r.fetchDidResolution(ctx, fullURL)
 	if err != nil {
@@ -76,12 +79,13 @@ func (r AdditionalSourceResolver) fetchDidResolution(ctx context.Context, fullUR
 	if err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(string(body)) == "" {
+	bodyString := strings.TrimSpace(string(body))
+	if bodyString == "" {
 		return nil, errors.New("empty response body")
 	}
 
 	var out document.DidResolution
-	if err := json.Unmarshal(body, &out); err != nil {
+	if err := json.Unmarshal([]byte(bodyString), &out); err != nil {
 		return nil, fmt.Errorf("decode did resolution: %w", err)
 	}
 	return &out, nil
@@ -212,4 +216,9 @@ func isZero(v any) bool {
 		s := strings.TrimSpace(string(b))
 		return s == "null" || s == "{}" || s == "[]"
 	}
+}
+
+func joinBaseURL(base, did string) string {
+	base = strings.TrimRight(base, "/")
+	return fmt.Sprintf("%s/%s", base, did)
 }

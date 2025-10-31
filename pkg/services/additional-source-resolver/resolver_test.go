@@ -11,6 +11,7 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,43 +61,6 @@ func mkDidRes(
 	}
 }
 
-func deepEqualDidDoc(t *testing.T, got, want *verifiable.DIDDocument) {
-	require.NotNil(t, got)
-	require.NotNil(t, want)
-	require.Equal(t, want.ID, got.ID, "DID mismatch")
-
-	gb, _ := json.Marshal(got.Context)
-	wb, _ := json.Marshal(want.Context)
-	require.Equal(t, string(wb), string(gb), "@context mismatch")
-
-	gotVMIDs := make([]string, 0, len(got.VerificationMethod))
-	for i := range got.VerificationMethod {
-		gotVMIDs = append(gotVMIDs, got.VerificationMethod[i].ID)
-	}
-	wantVMIDs := make([]string, 0, len(want.VerificationMethod))
-	for i := range want.VerificationMethod {
-		wantVMIDs = append(wantVMIDs, want.VerificationMethod[i].ID)
-	}
-	require.ElementsMatch(t, wantVMIDs, gotVMIDs, "verificationMethod mismatch")
-
-	jsonSlice := func(v any) []string {
-		b, _ := json.Marshal(v)
-		var arr []any
-		_ = json.Unmarshal(b, &arr)
-		out := make([]string, 0, len(arr))
-		for _, it := range arr {
-			j, _ := json.Marshal(it)
-			out = append(out, string(j))
-		}
-		return out
-	}
-
-	require.ElementsMatch(t, jsonSlice(want.Authentication), jsonSlice(got.Authentication), "authentication mismatch")
-	require.ElementsMatch(t, jsonSlice(want.AssertionMethod), jsonSlice(got.AssertionMethod), "assertionMethod mismatch")
-	require.ElementsMatch(t, jsonSlice(want.KeyAgreement), jsonSlice(got.KeyAgreement), "keyAgreement mismatch")
-	require.ElementsMatch(t, jsonSlice(want.Service), jsonSlice(got.Service), "service mismatch")
-}
-
 func TestResolveAndMerge_Table(t *testing.T) {
 	const baseURL = "http://resolver.test"
 	const theDID = "did:iden3:polygon:amoy:abc"
@@ -107,7 +71,6 @@ func TestResolveAndMerge_Table(t *testing.T) {
 		additional *document.DidResolution
 		httpStatus int
 		expected   *document.DidResolution
-		err        error
 	}{
 		{
 			name:   "Origin nil → take additional as-is",
@@ -122,7 +85,7 @@ func TestResolveAndMerge_Table(t *testing.T) {
 					},
 				},
 				[]interface{}{map[string]any{"id": "svc:1", "type": "Foo"}}),
-			expected: mkDidRes(theDID, []string{"https://www.w3.org/ns/did/v1", "https://schema.iden3.io/core/jsonld"},
+			expected: mkDidRes(theDID, []interface{}{"https://www.w3.org/ns/did/v1", "https://schema.iden3.io/core/jsonld"},
 				[]verifiable.CommonVerificationMethod{{ID: theDID + "#vm1"}},
 				[]verifiable.Authentication{
 					{
@@ -191,7 +154,6 @@ func TestResolveAndMerge_Table(t *testing.T) {
 				[]verifiable.CommonVerificationMethod{{ID: "x#vm"}}, nil, nil),
 			expected: mkDidRes(theDID, "https://www.w3.org/ns/did/v1",
 				[]verifiable.CommonVerificationMethod{{ID: theDID + "#vm1"}}, nil, nil),
-			err: ErrDIDMismatch,
 		},
 	}
 
@@ -218,7 +180,7 @@ func TestResolveAndMerge_Table(t *testing.T) {
 
 			orig := tc.origin
 			out, err := resolver.ResolveAndMerge(context.Background(), mustDID(t, theDID), orig)
-			require.ErrorIs(t, err, tc.err)
+			require.NoError(t, err)
 
 			if orig == nil {
 				require.NotNil(t, out)
@@ -228,7 +190,56 @@ func TestResolveAndMerge_Table(t *testing.T) {
 
 			require.NotNil(t, out)
 			require.NotNil(t, tc.expected)
-			deepEqualDidDoc(t, out.DidDocument, tc.expected.DidDocument)
+			assert.Equal(t, tc.expected.DidDocument, out.DidDocument)
+		})
+	}
+}
+
+func TestResolveAndMerge_Table_Error(t *testing.T) {
+	const baseURL = "http://resolver.test"
+	const theDID = "did:iden3:polygon:amoy:abc"
+
+	tests := []struct {
+		name        string
+		origin      *document.DidResolution
+		additional  *document.DidResolution
+		httpStatus  int
+		expectedErr error
+	}{
+		{
+			name: "Mismatched DID → merge error → return origin unchanged",
+			origin: mkDidRes(theDID, "https://www.w3.org/ns/did/v1",
+				[]verifiable.CommonVerificationMethod{{ID: theDID + "#vm1"}}, nil, nil),
+			additional: mkDidRes("did:iden3:polygon:amoy:DIFFERENT", "https://www.w3.org/ns/did/v1",
+				[]verifiable.CommonVerificationMethod{{ID: "x#vm"}}, nil, nil),
+			expectedErr: ErrDIDMismatch,
+		},
+	}
+
+	for i := range tests {
+		tc := &tests[i]
+		t.Run(tc.name, func(t *testing.T) {
+			status := tc.httpStatus
+			body := ""
+			if tc.additional != nil {
+				body = didResJSON(t, tc.additional)
+				if status == 0 {
+					status = http.StatusOK
+				}
+			} else if status == 0 {
+				status = http.StatusNotFound
+			}
+
+			client := newMockClient(func(r *http.Request) *http.Response {
+				return jsonHTTP(status, body)
+			})
+
+			resolver, err := NewAdditionalSourceResolver(baseURL, client)
+			require.NoError(t, err)
+
+			orig := tc.origin
+			_, err = resolver.ResolveAndMerge(context.Background(), mustDID(t, theDID), orig)
+			require.ErrorIs(t, err, tc.expectedErr)
 		})
 	}
 }
