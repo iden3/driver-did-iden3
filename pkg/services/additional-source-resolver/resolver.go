@@ -47,10 +47,7 @@ func (r AdditionalSourceResolver) ResolveAndMerge(ctx context.Context, did w3c.D
 	}
 
 	err = mergeDIDDocument(originalResolution.DidDocument, additionalResolution.DidDocument)
-	if err != nil {
-		log.Println("failed to merge did documents:", err)
-	}
-	return originalResolution, nil
+	return originalResolution, err
 }
 
 func (r AdditionalSourceResolver) fetchDidResolution(ctx context.Context, fullURL string) (*document.DidResolution, error) {
