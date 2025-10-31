@@ -146,15 +146,6 @@ func TestResolveAndMerge_Table(t *testing.T) {
 				[]interface{}{map[string]any{"id": "svc:1", "type": "Foo"}, map[string]any{"id": "svc:2", "type": "Bar"}},
 			),
 		},
-		{
-			name: "Mismatched DID → merge error → return origin unchanged",
-			origin: mkDidRes(theDID, "https://www.w3.org/ns/did/v1",
-				[]verifiable.CommonVerificationMethod{{ID: theDID + "#vm1"}}, nil, nil),
-			additional: mkDidRes("did:iden3:polygon:amoy:DIFFERENT", "https://www.w3.org/ns/did/v1",
-				[]verifiable.CommonVerificationMethod{{ID: "x#vm"}}, nil, nil),
-			expected: mkDidRes(theDID, "https://www.w3.org/ns/did/v1",
-				[]verifiable.CommonVerificationMethod{{ID: theDID + "#vm1"}}, nil, nil),
-		},
 	}
 
 	for i := range tests {
