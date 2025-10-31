@@ -107,6 +107,7 @@ func TestResolveAndMerge_Table(t *testing.T) {
 		additional *document.DidResolution
 		httpStatus int
 		expected   *document.DidResolution
+		err        error
 	}{
 		{
 			name:   "Origin nil → take additional as-is",
@@ -190,6 +191,7 @@ func TestResolveAndMerge_Table(t *testing.T) {
 				[]verifiable.CommonVerificationMethod{{ID: "x#vm"}}, nil, nil),
 			expected: mkDidRes(theDID, "https://www.w3.org/ns/did/v1",
 				[]verifiable.CommonVerificationMethod{{ID: theDID + "#vm1"}}, nil, nil),
+			err: ErrDIDMismatch,
 		},
 	}
 
@@ -216,7 +218,7 @@ func TestResolveAndMerge_Table(t *testing.T) {
 
 			orig := tc.origin
 			out, err := resolver.ResolveAndMerge(context.Background(), mustDID(t, theDID), orig)
-			require.NoError(t, err)
+			require.ErrorIs(t, err, tc.err)
 
 			if orig == nil {
 				require.NotNil(t, out)

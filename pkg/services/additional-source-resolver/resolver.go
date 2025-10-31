@@ -15,6 +15,8 @@ import (
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 )
 
+var ErrDIDMismatch = errors.New("cannot merge DID documents with different IDs")
+
 type AdditionalSourceResolver struct {
 	client *http.Client
 	URL    string
@@ -88,7 +90,7 @@ func (r AdditionalSourceResolver) fetchDidResolution(ctx context.Context, fullUR
 func mergeDIDDocument(p, a *verifiable.DIDDocument) error {
 	p.Context = mergeContexts(p.Context, a.Context)
 	if p.ID != a.ID {
-		return errors.New("cannot merge DID documents with different IDs")
+		return ErrDIDMismatch
 	}
 
 	p.VerificationMethod = appendByDistinctID(p.VerificationMethod, a.VerificationMethod, func(vm verifiable.CommonVerificationMethod) string { return vm.ID })
