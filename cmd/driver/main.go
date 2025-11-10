@@ -13,6 +13,7 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/app/configs"
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
+	additionalsourceresolver "github.com/iden3/driver-did-iden3/pkg/services/additional-source-resolver"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	"github.com/iden3/driver-did-iden3/pkg/services/pkh"
@@ -54,8 +55,19 @@ func main() {
 
 	thirdPartyDidResolvers := services.ThirdPartyDidResolvers{}
 	thirdPartyDidResolvers["did:pkh"] = pkhResolver
+
+	var additionalSourceResolver services.AdditionalSourceResolver
+	if cfg.AdditionalResolutionSource != "" {
+		client := &http.Client{
+			Timeout: 10 * time.Second,
+		}
+		additionalSourceResolver, err = additionalsourceresolver.NewAdditionalSourceResolver(cfg.AdditionalResolutionSource, client)
+		if err != nil {
+			log.Fatalf("failed configure additional source resolver %v", err)
+		}
+	}
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers))},
+		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers), services.WithAdditionalSourceResolver(additionalSourceResolver))},
 	}
 
 	server := http.Server{

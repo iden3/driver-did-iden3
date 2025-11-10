@@ -24,6 +24,10 @@ type thirdPartyResolver interface {
 	Resolve(ctx context.Context, did w3c.DID) (*document.DidResolution, error)
 }
 
+type AdditionalSourceResolver interface {
+	ResolveAndMerge(ctx context.Context, did w3c.DID, originalResolution *document.DidResolution) (*document.DidResolution, error)
+}
+
 type ThirdPartyDidResolvers map[string]thirdPartyResolver
 
 type DidDocumentServices struct {
@@ -32,6 +36,7 @@ type DidDocumentServices struct {
 	provers                  *DIDResolutionProverRegistry
 	revStatusOnChainResolver *resolvers.OnChainResolver
 	thirdPartyResolvers      ThirdPartyDidResolvers
+	additionalSourceResolver AdditionalSourceResolver
 }
 
 type ResolverOpts struct {
@@ -54,8 +59,14 @@ func WithThirdPartyDIDResolvers(thirdPartyResolvers ThirdPartyDidResolvers) DidD
 	}
 }
 
+func WithAdditionalSourceResolver(resolver AdditionalSourceResolver) DidDocumentOption {
+	return func(d *DidDocumentServices) {
+		d.additionalSourceResolver = resolver
+	}
+}
+
 func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, opts ...DidDocumentOption) *DidDocumentServices {
-	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil}
+	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil, nil}
 
 	for _, opt := range opts {
 		opt(didDocumentService)
@@ -79,7 +90,11 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	didPrefix := fmt.Sprintf("%s:%s", didParts[0], didParts[1])
 	thirdPartyResolver := d.thirdPartyResolvers[didPrefix]
 	if thirdPartyResolver != nil {
-		return thirdPartyResolver.Resolve(ctx, *userDID)
+		resolution, err := thirdPartyResolver.Resolve(ctx, *userDID)
+		if err != nil {
+			return nil, err
+		}
+		return d.resolveAdditionalSource(ctx, *userDID, resolution)
 	}
 
 	userID, err := core.IDFromDID(*userDID)
@@ -172,45 +187,13 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	}
 
 	if opts.Signature != "" {
-		if d.provers == nil {
-			return nil, errors.New("provers are not initialized")
-		}
-		prover, err := d.provers.GetDIDResolutionProverByProofType(verifiable.ProofType(opts.Signature))
+		err = d.attachResolutionProof(didResolution, *userDID, identityState, isPublished, opts)
 		if err != nil {
 			return nil, err
 		}
-		stateType := IdentityStateType
-		if opts.GistRoot != nil {
-			stateType = GlobalStateType
-		}
-
-		if stateType == IdentityStateType && ((opts.State != nil && identityState.StateInfo == nil) || !isPublished) { // this case is genesis state
-			// fill state info for genesis state to be able to prove it
-
-			state := opts.State
-			if state == nil {
-				state = big.NewInt(0)
-			}
-			identityState.StateInfo = &StateInfo{
-				ID:                  *userDID,
-				State:               state,
-				ReplacedByState:     big.NewInt(0),
-				CreatedAtTimestamp:  big.NewInt(0),
-				ReplacedAtTimestamp: big.NewInt(0),
-				CreatedAtBlock:      big.NewInt(0),
-				ReplacedAtBlock:     big.NewInt(0),
-			}
-		}
-
-		didResolutionProof, err := prover.Prove(*userDID, identityState, stateType)
-		if err != nil {
-			return nil, err
-		}
-
-		didResolution.DidResolutionMetadata.Context = document.DidResolutionMetadataSigContext()
-		didResolution.DidResolutionMetadata.Proof = append(didResolution.DidResolutionMetadata.Proof, didResolutionProof)
 	}
-	return didResolution, nil
+
+	return d.resolveAdditionalSource(ctx, *userDID, didResolution)
 }
 
 // ResolveDNSDomain return did document by domain via DNS.
@@ -287,6 +270,62 @@ func (d *DidDocumentServices) ResolveCredentialStatus(ctx context.Context, issue
 	}
 	ctx = verifiable.WithIssuerDID(ctx, did)
 	return d.revStatusOnChainResolver.Resolve(ctx, credentialStatus)
+}
+
+func (d *DidDocumentServices) resolveAdditionalSource(ctx context.Context, did w3c.DID, originalResolution *document.DidResolution) (*document.DidResolution, error) {
+	if d.additionalSourceResolver == nil {
+		return originalResolution, nil
+	}
+	merged, err := d.additionalSourceResolver.ResolveAndMerge(ctx, did, originalResolution)
+	if err != nil {
+		return originalResolution, nil
+	}
+	return merged, nil
+}
+
+func (d *DidDocumentServices) attachResolutionProof(didRes *document.DidResolution,
+	userDID w3c.DID,
+	identityState IdentityState,
+	isPublished bool,
+	opts *ResolverOpts) error {
+	if d.provers == nil {
+		return errors.New("provers are not initialized")
+	}
+	prover, err := d.provers.GetDIDResolutionProverByProofType(verifiable.ProofType(opts.Signature))
+	if err != nil {
+		return err
+	}
+	stateType := IdentityStateType
+	if opts.GistRoot != nil {
+		stateType = GlobalStateType
+	}
+
+	if stateType == IdentityStateType && ((opts.State != nil && identityState.StateInfo == nil) || !isPublished) { // this case is genesis state
+		// fill state info for genesis state to be able to prove it
+
+		state := opts.State
+		if state == nil {
+			state = big.NewInt(0)
+		}
+		identityState.StateInfo = &StateInfo{
+			ID:                  userDID,
+			State:               state,
+			ReplacedByState:     big.NewInt(0),
+			CreatedAtTimestamp:  big.NewInt(0),
+			ReplacedAtTimestamp: big.NewInt(0),
+			CreatedAtBlock:      big.NewInt(0),
+			ReplacedAtBlock:     big.NewInt(0),
+		}
+	}
+
+	didResolutionProof, err := prover.Prove(userDID, identityState, stateType)
+	if err != nil {
+		return err
+	}
+
+	didRes.DidResolutionMetadata.Context = document.DidResolutionMetadataSigContext()
+	didRes.DidResolutionMetadata.Proof = append(didRes.DidResolutionMetadata.Proof, didResolutionProof)
+	return nil
 }
 
 func isPublished(si *StateInfo) bool {
