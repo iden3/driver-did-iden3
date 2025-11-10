@@ -91,56 +91,71 @@ func (r AdditionalSourceResolver) fetchDidResolution(ctx context.Context, fullUR
 	return &out, nil
 }
 
-func mergeDIDDocument(p, a *verifiable.DIDDocument) error {
-	p.Context = mergeContexts(p.Context, a.Context)
+func mergeDIDDocument(p, a *verifiable.DIDDocument) (err error) {
+	if p.Context, err = mergeContexts(p.Context, a.Context); err != nil {
+		return err
+	}
 	if p.ID != a.ID {
 		return ErrDIDMismatch
 	}
 
 	p.VerificationMethod = appendByDistinctID(p.VerificationMethod, a.VerificationMethod, func(vm verifiable.CommonVerificationMethod) string { return vm.ID })
-	p.AssertionMethod = appendByDistinctJSON(p.AssertionMethod, a.AssertionMethod)
-	p.Authentication = appendByDistinctJSON(p.Authentication, a.Authentication)
-	p.KeyAgreement = appendByDistinctJSON(p.KeyAgreement, a.KeyAgreement)
-	p.Service = appendByDistinctJSON(p.Service, a.Service)
+
+	if p.AssertionMethod, err = appendByDistinctJSON(p.AssertionMethod, a.AssertionMethod); err != nil {
+		return err
+	}
+	if p.Authentication, err = appendByDistinctJSON(p.Authentication, a.Authentication); err != nil {
+		return err
+	}
+	if p.KeyAgreement, err = appendByDistinctJSON(p.KeyAgreement, a.KeyAgreement); err != nil {
+		return err
+	}
+	if p.Service, err = appendByDistinctJSON(p.Service, a.Service); err != nil {
+		return err
+	}
 	return nil
 }
 
-func mergeContexts(primary, additional interface{}) interface{} {
-	if isZero(additional) {
-		return primary
+func mergeContexts(primary, additional interface{}) (interface{}, error) {
+	isAdditionalZero, err := isZero(additional)
+	if err != nil {
+		return nil, err
 	}
-	if isZero(primary) {
-		return additional
+	if isAdditionalZero {
+		return primary, nil
 	}
 
-	toSlice := func(v interface{}) []string {
+	isPrimaryZero, err := isZero(primary)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if isPrimaryZero {
+		return additional, nil
+	}
+
+	toSlice := func(v interface{}) ([]string, error) {
 		switch ctx := v.(type) {
 		case string:
-			return []string{ctx}
+			return []string{ctx}, nil
 		case []string:
-			return ctx
-		case []interface{}:
-			out := make([]string, 0, len(ctx))
-			for _, c := range ctx {
-				if s, ok := c.(string); ok {
-					out = append(out, s)
-				}
-			}
-			return out
+			return ctx, nil
 		default:
-			b, _ := json.Marshal(v)
-			var arr []string
-			if err := json.Unmarshal(b, &arr); err == nil {
-				return arr
-			}
-			return nil
+			return nil, errors.New("invalid context type")
 		}
 	}
 
-	pSlice := toSlice(primary)
-	aSlice := toSlice(additional)
+	pSlice, err := toSlice(primary)
+	if err != nil {
+		return nil, err
+	}
+	aSlice, err := toSlice(additional)
+	if err != nil {
+		return nil, err
+	}
 	if len(aSlice) == 0 {
-		return pSlice
+		return pSlice, nil
 	}
 
 	seen := make(map[string]struct{}, len(pSlice))
@@ -154,9 +169,9 @@ func mergeContexts(primary, additional interface{}) interface{} {
 		}
 	}
 	if len(pSlice) == 1 {
-		return pSlice[0]
+		return pSlice[0], nil
 	}
-	return pSlice
+	return pSlice, nil
 }
 
 func appendByDistinctID[T any](dst, src []T, idOf func(T) string) []T {
@@ -181,40 +196,53 @@ func appendByDistinctID[T any](dst, src []T, idOf func(T) string) []T {
 	return dst
 }
 
-func appendByDistinctJSON[T any](dst, src []T) []T {
+func appendByDistinctJSON[T any](dst, src []T) ([]T, error) {
 	if len(src) == 0 {
-		return dst
+		return dst, nil
 	}
 	seen := make(map[string]struct{}, len(dst)+len(src))
 	for _, v := range dst {
-		seen[mustJSONKey(v)] = struct{}{}
+		jsonKey, err := toJSONKey(v)
+		if err != nil {
+			return nil, err
+		}
+		seen[jsonKey] = struct{}{}
 	}
 	for _, v := range src {
-		k := mustJSONKey(v)
+		k, err := toJSONKey(v)
+		if err != nil {
+			return nil, err
+		}
 		if _, ok := seen[k]; ok {
 			continue
 		}
 		dst = append(dst, v)
 		seen[k] = struct{}{}
 	}
-	return dst
+	return dst, nil
 }
 
-func mustJSONKey(v any) string {
-	b, _ := json.Marshal(v)
-	return string(b)
+func toJSONKey(v any) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
-func isZero(v any) bool {
+func isZero(v any) (bool, error) {
 	switch t := v.(type) {
 	case nil:
-		return true
+		return true, nil
 	case string:
-		return t == ""
+		return t == "", nil
 	default:
-		b, _ := json.Marshal(v)
+		b, err := json.Marshal(v)
+		if err != nil {
+			return false, err
+		}
 		s := strings.TrimSpace(string(b))
-		return s == "null" || s == "{}" || s == "[]"
+		return s == "null" || s == "{}" || s == "[]", nil
 	}
 }
 
