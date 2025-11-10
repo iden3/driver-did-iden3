@@ -141,6 +141,14 @@ func mergeContexts(primary, additional interface{}) (interface{}, error) {
 			return []string{ctx}, nil
 		case []string:
 			return ctx, nil
+		case []interface{}:
+			out := make([]string, 0, len(ctx))
+			for _, c := range ctx {
+				if s, ok := c.(string); ok {
+					out = append(out, s)
+				}
+			}
+			return out, nil
 		default:
 			return nil, errors.New("invalid context type")
 		}
