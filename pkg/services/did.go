@@ -2,9 +2,13 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math/big"
 	"net"
+	"net/http"
 	"strings"
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
@@ -37,12 +41,15 @@ type DidDocumentServices struct {
 	revStatusOnChainResolver *resolvers.OnChainResolver
 	thirdPartyResolvers      ThirdPartyDidResolvers
 	additionalSourceResolver AdditionalSourceResolver
+	didNamingServiceURL      string
+	client                   *http.Client
 }
 
 type ResolverOpts struct {
 	State     *big.Int
 	GistRoot  *big.Int
 	Signature string
+	Alias     string
 }
 
 type DidDocumentOption func(*DidDocumentServices)
@@ -65,8 +72,8 @@ func WithAdditionalSourceResolver(resolver AdditionalSourceResolver) DidDocument
 	}
 }
 
-func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, opts ...DidDocumentOption) *DidDocumentServices {
-	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil, nil}
+func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, didNamingServiceURL string, client *http.Client, opts ...DidDocumentOption) *DidDocumentServices {
+	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil, nil, didNamingServiceURL, client}
 
 	for _, opt := range opts {
 		opt(didDocumentService)
@@ -182,6 +189,14 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
+	if d.didNamingServiceURL != "" {
+		didResolution.DidDocument.Service = append(didResolution.DidDocument.Service, verifiable.Service{
+			ID:              fmt.Sprintf("%s#dns", did),
+			Type:            document.Iden3DIDNamingServiceV1Type,
+			ServiceEndpoint: fmt.Sprintf("%s/%s", d.didNamingServiceURL, did),
+		})
+	}
+
 	if gist != nil && gist.Proof != nil {
 		didResolution.DidDocument.Context = append(didResolution.DidDocument.Context.([]string), document.Iden3proofsContext)
 	}
@@ -244,6 +259,73 @@ func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain strin
 	}
 
 	return d.GetDidDocument(ctx, did, nil)
+}
+
+// ResolveDIDByAlias return did by alias from DID Naming Service.
+func (d *DidDocumentServices) ResolveDIDByAlias(ctx context.Context, alias string, did string) (string, error) {
+	if d.didNamingServiceURL == "" {
+		return did, errors.New("missing configuration for DidNamingServiceURL")
+	}
+
+	// Check did param is zero address Ethereum Identity
+	userDID, err := w3c.ParseDID(did)
+	if err != nil {
+		return did, fmt.Errorf("failed parse did from '%s': %w\n", did, err)
+	}
+	userID, err := core.IDFromDID(*userDID)
+	if err != nil {
+		return did, fmt.Errorf("failed get id from did '%s': %w\n", did, err)
+	}
+	userEthAddress, err := core.EthAddressFromID(userID)
+	if err != nil {
+		return did, fmt.Errorf("failed get eth address from id '%s': %w\n", userID.String(), err)
+	}
+	zeroAddress := [20]byte{}
+	if userEthAddress != zeroAddress {
+		return did, fmt.Errorf("did param should be zero address Ethereum Identity, got '%s'", did)
+	}
+	didNamingServiceResolution, err := d.fetchDidNamingServiceResolution(ctx, alias)
+	if err != nil {
+		return did, fmt.Errorf("error fetching did naming service resolution for '%s': %w", alias, err)
+	}
+	return didNamingServiceResolution.Did, nil
+}
+
+func (d *DidDocumentServices) fetchDidNamingServiceResolution(ctx context.Context, alias string) (*document.DidNamingServiceResolution, error) {
+	fullURL := fmt.Sprintf("%s/%s", d.didNamingServiceURL, alias)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+	res, err := d.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			log.Println("failed to close response body:", err)
+		}
+	}()
+	if res.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.New("failed to fetch did naming service resolution")
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	bodyString := strings.TrimSpace(string(body))
+	if bodyString == "" {
+		return nil, errors.New("empty response body")
+	}
+
+	var out document.DidNamingServiceResolution
+	if err := json.Unmarshal([]byte(bodyString), &out); err != nil {
+		return nil, fmt.Errorf("decode did naming service resolution: %w", err)
+	}
+	return &out, nil
 }
 
 func (d *DidDocumentServices) GetGist(ctx context.Context, chain, network string, opts *ResolverOpts) (*verifiable.GistInfo, error) {

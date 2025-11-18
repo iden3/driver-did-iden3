@@ -22,6 +22,7 @@ type ResolverSettings map[string]map[string]struct {
 type Config struct {
 	WalletKey                  string `envconfig:"WALLET_KEY"`
 	AdditionalResolutionSource string `envconfig:"ADDITIONAL_RESOLUTION_SOURCE"`
+	DidNamingServiceURL        string `envconfig:"DID_NAMING_SERVICE_URL"`
 	Server                     struct {
 		Port int    `envconfig:"PORT" default:"8080"`
 		Host string `envconfig:"HOST" default:"localhost"`

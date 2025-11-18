@@ -143,7 +143,7 @@ func (p *EIP712Prover) getTypedData(did w3c.DID, identityState services.Identity
 			"replacedAtTimestamp": replacedAtTimestamp,
 		}
 	default:
-		return apitypes.TypedData{}, fmt.Errorf("type of state info %d is not supportede", stateType)
+		return apitypes.TypedData{}, fmt.Errorf("type of state info %d is not supported", stateType)
 	}
 
 	typedData := apitypes.TypedData{

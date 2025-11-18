@@ -26,6 +26,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		r.URL.Query().Get("state"),
 		r.URL.Query().Get("gist"),
 		r.URL.Query().Get("signature"),
+		r.URL.Query().Get("alias"),
 	)
 	if err != nil {
 		log.Println("invalid options query:", err)
@@ -33,7 +34,18 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state, err := d.DidDocumentService.GetDidDocument(r.Context(), rawURL[len(rawURL)-1], &opts)
+	did := rawURL[len(rawURL)-1]
+	if opts.Alias != "" {
+		// Resolve did by alias
+		did, err = d.DidDocumentService.ResolveDIDByAlias(r.Context(), opts.Alias, did)
+		if err != nil {
+			log.Printf("failed resolve did by alias '%s': %v\n", opts.Alias, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	state, err := d.DidDocumentService.GetDidDocument(r.Context(), did, &opts)
 	if errors.Is(err, core.ErrIncorrectDID) {
 		log.Println("invalid did:", err)
 
@@ -145,14 +157,14 @@ func (d *DidDocumentHandler) ResolveCredentialStatus(w http.ResponseWriter, r *h
 	}
 }
 
-func getResolverOpts(state, gistRoot, signature string) (ro services.ResolverOpts, err error) {
+func getResolverOpts(state, gistRoot, signature, alias string) (ro services.ResolverOpts, err error) {
 	if state != "" && gistRoot != "" {
 		return ro, errors.New("'state' and 'gist root' cannot be used together")
 	}
 	if state != "" {
 		s, err := merkletree.NewHashFromHex(state)
 		if err != nil {
-			return ro, fmt.Errorf("invalid state formant: %v", err)
+			return ro, fmt.Errorf("invalid state format: %v", err)
 		}
 		ro.State = s.BigInt()
 	}
@@ -168,6 +180,12 @@ func getResolverOpts(state, gistRoot, signature string) (ro services.ResolverOpt
 	}
 	if signature != "" {
 		ro.Signature = signature
+	}
+	if alias != "" {
+		if signature != "" || state != "" || gistRoot != "" {
+			return ro, errors.New("'alias' can only be used as single parameter")
+		}
+		ro.Alias = alias
 	}
 	return
 }
