@@ -67,7 +67,6 @@ func main() {
 			log.Fatalf("failed configure additional source resolver %v", err)
 		}
 	}
-	log.Printf("Driver DID Iden3 started with config: %+v\n", cfg)
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
 		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, cfg.DidNamingServiceURL, client, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers), services.WithAdditionalSourceResolver(additionalSourceResolver))},
 	}

@@ -261,8 +261,12 @@ func (d *DidDocumentServices) ResolveENSDomain(ctx context.Context, domain strin
 	return d.GetDidDocument(ctx, did, nil)
 }
 
-// ResolveDIDByAlias return did by alias from DID Naming Service.
-func (d *DidDocumentServices) ResolveDIDByAlias(ctx context.Context, alias string, did string) (string, error) {
+// ResolveDIDByAlias resolves a DID by its alias using the DID Naming Service.
+// The did parameter must be a zero address Ethereum Identity that matches the
+// method and network of the resolved DID. Returns the resolved DID string or
+// an error if the naming service is not configured, the did is invalid, or
+// resolution fails.
+func (d *DidDocumentServices) ResolveDIDByAlias(ctx context.Context, alias, did string) (string, error) {
 	if d.didNamingServiceURL == "" {
 		return did, errors.New("missing configuration for DidNamingServiceURL")
 	}
@@ -270,15 +274,15 @@ func (d *DidDocumentServices) ResolveDIDByAlias(ctx context.Context, alias strin
 	// Check did param is zero address Ethereum Identity
 	userDID, err := w3c.ParseDID(did)
 	if err != nil {
-		return did, fmt.Errorf("failed parse did from '%s': %w\n", did, err)
+		return did, fmt.Errorf("failed parse did from '%s': %w", did, err)
 	}
 	userID, err := core.IDFromDID(*userDID)
 	if err != nil {
-		return did, fmt.Errorf("failed get id from did '%s': %w\n", did, err)
+		return did, fmt.Errorf("failed get id from did '%s': %w", did, err)
 	}
 	userEthAddress, err := core.EthAddressFromID(userID)
 	if err != nil {
-		return did, fmt.Errorf("failed get eth address from id '%s': %w\n", userID.String(), err)
+		return did, fmt.Errorf("failed get eth address from id '%s': %w", userID.String(), err)
 	}
 	zeroAddress := [20]byte{}
 	if userEthAddress != zeroAddress {
@@ -306,9 +310,7 @@ func (d *DidDocumentServices) fetchDidNamingServiceResolution(ctx context.Contex
 			log.Println("failed to close response body:", err)
 		}
 	}()
-	if res.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
+
 	if res.StatusCode != http.StatusOK {
 		return nil, errors.New("failed to fetch did naming service resolution")
 	}

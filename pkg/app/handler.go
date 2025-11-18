@@ -187,5 +187,5 @@ func getResolverOpts(state, gistRoot, signature, alias string) (ro services.Reso
 		}
 		ro.Alias = alias
 	}
-	return
+	return ro, nil
 }
