@@ -15,6 +15,7 @@ import (
 	"github.com/iden3/driver-did-iden3/pkg/services"
 	additionalsourceresolver "github.com/iden3/driver-did-iden3/pkg/services/additional-source-resolver"
 	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
+	didnamingservice "github.com/iden3/driver-did-iden3/pkg/services/did-naming-service"
 	"github.com/iden3/driver-did-iden3/pkg/services/ens"
 	"github.com/iden3/driver-did-iden3/pkg/services/pkh"
 	"github.com/iden3/driver-did-iden3/pkg/services/provers"
@@ -57,17 +58,27 @@ func main() {
 	thirdPartyDidResolvers["did:pkh"] = pkhResolver
 
 	var additionalSourceResolver services.AdditionalSourceResolver
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
 	if cfg.AdditionalResolutionSource != "" {
-		client := &http.Client{
-			Timeout: 10 * time.Second,
-		}
 		additionalSourceResolver, err = additionalsourceresolver.NewAdditionalSourceResolver(cfg.AdditionalResolutionSource, client)
 		if err != nil {
 			log.Fatalf("failed configure additional source resolver %v", err)
 		}
 	}
+
+	var didNamingService services.DIDNamingService
+	if cfg.DidNamingServiceURL != "" {
+		didNamingService, err = didnamingservice.NewDIDNamingService(cfg.DidNamingServiceURL, client)
+		if err != nil {
+			log.Fatalf("failed configure DID naming service %v", err)
+		}
+	}
+
 	mux := app.Handlers{DidDocumentHandler: &app.DidDocumentHandler{
-		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers), services.WithAdditionalSourceResolver(additionalSourceResolver))},
+		DidDocumentService: services.NewDidDocumentServices(resolvers, r, revocationResolvers, client, services.WithProvers(proverRegistry), services.WithThirdPartyDIDResolvers(thirdPartyDidResolvers), services.WithAdditionalSourceResolver(additionalSourceResolver), services.WithDIDNamingService(didNamingService))},
 	}
 
 	server := http.Server{

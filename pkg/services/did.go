@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/http"
 	"strings"
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
@@ -28,6 +29,11 @@ type AdditionalSourceResolver interface {
 	ResolveAndMerge(ctx context.Context, did w3c.DID, originalResolution *document.DidResolution) (*document.DidResolution, error)
 }
 
+type DIDNamingService interface {
+	ResolveDIDByAlias(ctx context.Context, alias, did string) (string, error)
+	GetURL() string
+}
+
 type ThirdPartyDidResolvers map[string]thirdPartyResolver
 
 type DidDocumentServices struct {
@@ -37,12 +43,15 @@ type DidDocumentServices struct {
 	revStatusOnChainResolver *resolvers.OnChainResolver
 	thirdPartyResolvers      ThirdPartyDidResolvers
 	additionalSourceResolver AdditionalSourceResolver
+	didNamingService         DIDNamingService
+	client                   *http.Client
 }
 
 type ResolverOpts struct {
 	State     *big.Int
 	GistRoot  *big.Int
 	Signature string
+	Alias     string
 }
 
 type DidDocumentOption func(*DidDocumentServices)
@@ -65,8 +74,14 @@ func WithAdditionalSourceResolver(resolver AdditionalSourceResolver) DidDocument
 	}
 }
 
-func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, opts ...DidDocumentOption) *DidDocumentServices {
-	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil, nil}
+func WithDIDNamingService(didNamingService DIDNamingService) DidDocumentOption {
+	return func(d *DidDocumentServices) {
+		d.didNamingService = didNamingService
+	}
+}
+
+func NewDidDocumentServices(resolverRegistry *ResolverRegistry, registry *ens.Registry, revStatusOnChainResolver *resolvers.OnChainResolver, client *http.Client, opts ...DidDocumentOption) *DidDocumentServices {
+	didDocumentService := &DidDocumentServices{resolverRegistry, registry, nil, revStatusOnChainResolver, nil, nil, nil, client}
 
 	for _, opt := range opts {
 		opt(didDocumentService)
@@ -182,6 +197,14 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		},
 	)
 
+	if d.didNamingService != nil {
+		didResolution.DidDocument.Service = append(didResolution.DidDocument.Service, verifiable.Service{
+			ID:              fmt.Sprintf("%s#dns", did),
+			Type:            document.Iden3DIDNamingServiceV1Type,
+			ServiceEndpoint: fmt.Sprintf("%s/%s", d.didNamingService.GetURL(), did),
+		})
+	}
+
 	if gist != nil && gist.Proof != nil {
 		didResolution.DidDocument.Context = append(didResolution.DidDocument.Context.([]string), document.Iden3proofsContext)
 	}
@@ -281,6 +304,13 @@ func (d *DidDocumentServices) resolveAdditionalSource(ctx context.Context, did w
 		return originalResolution, nil
 	}
 	return merged, nil
+}
+
+func (d *DidDocumentServices) ResolveDIDByAlias(ctx context.Context, alias, did string) (string, error) {
+	if d.didNamingService == nil {
+		return did, errors.New("missing configuration for DidNamingService")
+	}
+	return d.didNamingService.ResolveDIDByAlias(ctx, alias, did)
 }
 
 func (d *DidDocumentServices) attachResolutionProof(didRes *document.DidResolution,

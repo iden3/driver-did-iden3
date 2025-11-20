@@ -18,6 +18,7 @@ const (
 	Iden3ResolutionMetadataType          = "Iden3ResolutionMetadata"
 	EcdsaSecp256k1RecoveryMethod2020Type = "EcdsaSecp256k1RecoveryMethod2020"
 	TezosMethod2021Type                  = "TezosMethod2021"
+	Iden3DIDNamingServiceV1Type          = "Iden3DIDNamingServiceV1"
 
 	DefaultDidDocContext                    = "https://www.w3.org/ns/did/v1"
 	BlockchainAccountIDContext              = "https://w3id.org/security#blockchainAccountId"
@@ -48,6 +49,15 @@ type DidResolution struct {
 	// https://www.w3.org/TR/did-core/#did-resolution
 	DidResolutionMetadata *DidResolutionMetadata `json:"didResolutionMetadata"`
 	DidDocumentMetadata   *DidDocumentMetadata   `json:"didDocumentMetadata"`
+}
+
+type Alias struct {
+	Alias string `json:"alias"`
+	Type  string `json:"type"`
+}
+type DidNamingServiceResolution struct {
+	Did     string  `json:"did"`
+	Aliases []Alias `json:"aliases"`
 }
 
 // NewDidResolution create did resolution with default values.
