@@ -68,6 +68,20 @@ jobs:
           echo -e "  main:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.RPC_BILLIONS_MAIN }}" >> resolvers.settings.yaml
+          echo -e "base:" >> resolvers.settings.yaml
+          echo -e "  sepolia:" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    networkURL: ${{ secrets.RPC_BASE_SEPOLIA }}" >> resolvers.settings.yaml
+          echo -e "  main:" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    networkURL: ${{ secrets.RPC_BASE_MAIN }}" >> resolvers.settings.yaml
+          echo -e "bnb:" >> resolvers.settings.yaml
+          echo -e "  test:" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    networkURL: ${{ secrets.RPC_BNB_TEST }}" >> resolvers.settings.yaml
+          echo -e "  main:" >> resolvers.settings.yaml
+          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
+          echo -e "    networkURL: ${{ secrets.RPC_BNB_MAIN }}" >> resolvers.settings.yaml
 
       - name: Set up Docker Buildx
         id: buildx
