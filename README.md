@@ -29,4 +29,6 @@ Driver for the iden3 DID method
         driver-did-iden3:local
     ```
 
-   
+   ## License
+
+   This repository is part of the iden3 project copyright 2026 0KIMS Association and published under MIT / Apache 2.0 license. Please check the LICENSE-MIT and LICENSE-APACHE files for more details.
