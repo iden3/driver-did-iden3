@@ -57,7 +57,16 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	accept := pickAccept(r)
 	if accept == "" {
-		http.Error(w, "not acceptable", http.StatusNotAcceptable)
+		w.Header().Set("Content-Type", string(acceptDIDResolution))
+		w.WriteHeader(http.StatusNotAcceptable)
+		resp := document.DidResolution{
+			DidResolutionMetadata: &document.DidResolutionMetadata{
+				Error: "representationNotSupported",
+			},
+		}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			log.Println("failed write response:", err)
+		}
 		return
 	}
 
@@ -70,6 +79,30 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	if accept == acceptAny {
 		accept = acceptDIDResolution
+	}
+
+	// Handle DID Resolution protocol-level errors that are returned in the resolution metadata.
+	if didResolution != nil && didResolution.DidResolutionMetadata != nil && didResolution.DidResolutionMetadata.Error != "" {
+		var status int
+		switch didResolution.DidResolutionMetadata.Error {
+		case document.ErrInvalidDID:
+			status = http.StatusBadRequest
+		case document.ErrNotFound:
+			status = http.StatusNotFound
+		case document.ErrMethodNotSupported:
+			status = http.StatusNotImplemented
+		default:
+			status = http.StatusInternalServerError
+		}
+		w.Header().Set("Content-Type", string(acceptDIDResolution))
+		if explicitAccept {
+			didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
+		}
+		w.WriteHeader(status)
+		if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+			log.Println("failed write response:", err)
+		}
+		return
 	}
 
 	switch accept {
@@ -244,8 +277,8 @@ func pickAccept(r *http.Request) acceptType {
 }
 
 func normalizeMediaType(v string) acceptType {
-	v = strings.TrimSpace(v)
 	v = stripParams(v)
+	v = strings.TrimSpace(v)
 	v = strings.ToLower(v)
 	return acceptType(v)
 }
