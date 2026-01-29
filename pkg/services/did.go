@@ -82,8 +82,8 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	userDID, err := w3c.ParseDID(did)
 	if err != nil {
-		// mask error to ErrIncorrectDID
-		err = core.ErrIncorrectDID
+		// wrap original error while categorizing it as ErrIncorrectDID
+		err = fmt.Errorf("%w: %v", core.ErrIncorrectDID, err)
 	}
 	errResolution, err := expectedError(err)
 	if errResolution != nil || err != nil {

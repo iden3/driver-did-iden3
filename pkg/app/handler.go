@@ -61,7 +61,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotAcceptable)
 		resp := document.DidResolution{
 			DidResolutionMetadata: &document.DidResolutionMetadata{
-				Error: "representationNotSupported",
+				Error: document.ErrRepresentationNotSupported,
 			},
 		}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
@@ -106,24 +106,42 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch accept {
-	case acceptDIDResolution:
-		w.Header().Set("Content-Type", string(acceptDIDResolution))
-		w.WriteHeader(http.StatusOK)
-		if explicitAccept && didResolution.DidResolutionMetadata != nil {
-			didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
-		}
-		if err := json.NewEncoder(w).Encode(didResolution); err != nil {
-			log.Println("failed write response:", err)
-		}
-		return
-
 	case acceptDIDJSON, acceptDIDLDJSON:
+		if didResolution == nil || didResolution.DidDocument == nil {
+			log.Println("failed write response: did document is nil")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("Content-Type", string(accept))
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(didResolution.DidDocument); err != nil {
 			log.Println("failed write response:", err)
 		}
 		return
+	case acceptDIDResolution:
+		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
+		return
+	default:
+		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
+		return
+	}
+}
+
+func writeDIDResolution(
+	w http.ResponseWriter,
+	didResolution *document.DidResolution,
+	contentType string,
+	explicitAccept bool,
+) {
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(http.StatusOK)
+
+	if explicitAccept && didResolution.DidResolutionMetadata != nil {
+		didResolution.DidResolutionMetadata.ContentType = contentType
+	}
+
+	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+		log.Println("failed write response:", err)
 	}
 }
 
