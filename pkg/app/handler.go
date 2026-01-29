@@ -9,11 +9,26 @@ import (
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
-	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-merkletree-sql/v2"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/pkg/errors"
 )
+
+type acceptType string
+
+const (
+	acceptAny           acceptType = "*/*"
+	acceptDIDJSON       acceptType = "application/did+json"
+	acceptDIDLDJSON     acceptType = "application/did+ld+json"
+	acceptDIDResolution acceptType = "application/did-resolution+json"
+)
+
+var supportedAccept = []acceptType{
+	acceptDIDLDJSON,
+	acceptDIDJSON,
+	acceptDIDResolution,
+	acceptAny,
+}
 
 type DidDocumentHandler struct {
 	DidDocumentService *services.DidDocumentServices
@@ -33,19 +48,54 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state, err := d.DidDocumentService.GetDidDocument(r.Context(), rawURL[len(rawURL)-1], &opts)
-	if errors.Is(err, core.ErrIncorrectDID) {
-		log.Println("invalid did:", err)
+	// DidResolutionMetadata.ContentType should be included only if Accept header or query param is explicitly set
+	acceptQuery := strings.TrimSpace(r.URL.Query().Get("accept"))
+	acceptHeader := strings.TrimSpace(r.Header.Get("Accept"))
+	explicitAccept :=
+		acceptQuery != "" ||
+			(acceptHeader != "" && acceptHeader != "*/*")
 
-	} else if err != nil {
+	accept := pickAccept(r)
+	if accept == "" {
+		http.Error(w, "not acceptable", http.StatusNotAcceptable)
+		return
+	}
+
+	didResolution, err := d.DidDocumentService.GetDidDocument(r.Context(), rawURL[len(rawURL)-1], &opts)
+	if err != nil {
 		log.Printf("failed get did document: %+v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	if accept == acceptAny {
+		accept = acceptDIDResolution
+	}
+
+	switch accept {
+	case acceptDIDResolution:
+		w.Header().Set("Content-Type", string(acceptDIDResolution))
+		w.WriteHeader(http.StatusOK)
+		if explicitAccept && didResolution.DidResolutionMetadata != nil {
+			didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
+		}
+		if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+			log.Println("failed write response:", err)
+		}
+		return
+
+	case acceptDIDJSON, acceptDIDLDJSON:
+		w.Header().Set("Content-Type", string(accept))
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(didResolution.DidDocument); err != nil {
+			log.Println("failed write response:", err)
+		}
+		return
+	}
+
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(state); err != nil {
+	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
 		log.Println("failed write response")
 	}
 }
@@ -170,4 +220,54 @@ func getResolverOpts(state, gistRoot, signature string) (ro services.ResolverOpt
 		ro.Signature = signature
 	}
 	return
+}
+
+func pickAccept(r *http.Request) acceptType {
+	if q := strings.TrimSpace(r.URL.Query().Get("accept")); q != "" {
+		mt := normalizeMediaType(q)
+		if isSupported(mt) {
+			return mt
+		}
+		return ""
+	}
+
+	h := strings.TrimSpace(r.Header.Get("Accept"))
+	if h == "" {
+		return acceptAny
+	}
+
+	for _, p := range strings.Split(h, ",") {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		mt := normalizeMediaType(p)
+		if isSupported(mt) {
+			return mt
+		}
+	}
+	return ""
+}
+
+func normalizeMediaType(v string) acceptType {
+	v = strings.TrimSpace(v)
+	v = stripParams(v)
+	v = strings.ToLower(v)
+	return acceptType(v)
+}
+
+func isSupported(mt acceptType) bool {
+	for _, s := range supportedAccept {
+		if mt == s {
+			return true
+		}
+	}
+	return false
+}
+
+func stripParams(v string) string {
+	if i := strings.IndexByte(v, ';'); i >= 0 {
+		return v[:i]
+	}
+	return v
 }

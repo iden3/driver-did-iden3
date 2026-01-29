@@ -81,8 +81,12 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	}
 
 	userDID, err := w3c.ParseDID(did)
-	errResolution, err := expectedError(err)
 	if err != nil {
+		// mask error to ErrIncorrectDID
+		err = core.ErrIncorrectDID
+	}
+	errResolution, err := expectedError(err)
+	if errResolution != nil || err != nil {
 		return errResolution, err
 	}
 
@@ -99,25 +103,25 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 
 	userID, err := core.IDFromDID(*userDID)
 	errResolution, err = expectedError(err)
-	if err != nil {
+	if errResolution != nil || err != nil {
 		return errResolution, err
 	}
 
 	b, err := core.BlockchainFromID(userID)
 	errResolution, err = expectedError(err)
-	if err != nil {
+	if errResolution != nil || err != nil {
 		return errResolution, err
 	}
 
 	n, err := core.NetworkIDFromID(userID)
 	errResolution, err = expectedError(err)
-	if err != nil {
+	if errResolution != nil || err != nil {
 		return errResolution, err
 	}
 
 	resolver, err := d.resolvers.GetResolverByNetwork(string(b), string(n))
 	errResolution, err = expectedError(err)
-	if err != nil {
+	if errResolution != nil || err != nil {
 		return errResolution, err
 	}
 
@@ -352,19 +356,17 @@ func expectedError(err error) (*document.DidResolution, error) {
 	if err == nil {
 		return nil, nil
 	}
-
 	switch {
 	case errors.Is(err, core.ErrIncorrectDID):
-		return document.NewDidInvalidResolution(err.Error()), err
+		return document.NewDidInvalidResolution(err.Error()), nil
 	case
 		errors.Is(err, core.ErrBlockchainNotSupportedForDID),
 		errors.Is(err, core.ErrNetworkNotSupportedForDID):
-
-		return document.NewNetworkNotSupportedForDID(err.Error()), err
+		return document.NewNetworkNotSupportedForDID(err.Error()), nil
 	case errors.Is(err, core.ErrDIDMethodNotSupported):
-		return document.NewDidMethodNotSupportedResolution(err.Error()), err
+	case errors.Is(err, core.ErrMethodUnknown):
+		return document.NewDidMethodNotSupportedResolution(err.Error()), nil
 	}
-
 	return nil, err
 }
 
