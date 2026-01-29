@@ -92,12 +92,6 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
-		log.Println("failed write response")
-	}
 }
 
 // GetByDNSDomain get a did document by domain.
@@ -112,7 +106,7 @@ func (d *DidDocumentHandler) GetByDNSDomain(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(state); err != nil {
 		log.Println("failed write response")

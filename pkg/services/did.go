@@ -363,8 +363,8 @@ func expectedError(err error) (*document.DidResolution, error) {
 		errors.Is(err, core.ErrBlockchainNotSupportedForDID),
 		errors.Is(err, core.ErrNetworkNotSupportedForDID):
 		return document.NewNetworkNotSupportedForDID(err.Error()), nil
-	case errors.Is(err, core.ErrDIDMethodNotSupported):
-	case errors.Is(err, core.ErrMethodUnknown):
+	case errors.Is(err, core.ErrDIDMethodNotSupported),
+		errors.Is(err, core.ErrMethodUnknown):
 		return document.NewDidMethodNotSupportedResolution(err.Error()), nil
 	}
 	return nil, err
