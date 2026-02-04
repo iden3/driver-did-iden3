@@ -34,6 +34,8 @@ type DidDocumentHandler struct {
 	DidDocumentService *services.DidDocumentServices
 }
 
+// Get resolves a DID document for the given request and writes the response
+// according to the requested representation.
 func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	rawURL := strings.Split(r.URL.Path, "/")
 	did := rawURL[len(rawURL)-1]
@@ -290,6 +292,12 @@ func (d *DidDocumentHandler) resolveRepresentation(
 	didResolution *document.DidResolution,
 	accept acceptType,
 ) {
+	if didResolution == nil {
+		log.Println("didResolution is nil")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	if didResolution.DidResolutionMetadata == nil {
 		didResolution.DidResolutionMetadata = &document.DidResolutionMetadata{}
 	}
