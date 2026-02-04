@@ -9,10 +9,11 @@ import (
 type ErrorCode string
 
 const (
-	ErrInvalidDID         ErrorCode = "invalidDid"
-	ErrMethodNotSupported ErrorCode = "methodNotSupported"
-	ErrNotFound           ErrorCode = "notFound"
-	ErrUnknownNetwork     ErrorCode = "unknownNetwork"
+	ErrInvalidDID                 ErrorCode = "invalidDid"
+	ErrMethodNotSupported         ErrorCode = "methodNotSupported"
+	ErrNotFound                   ErrorCode = "notFound"
+	ErrUnknownNetwork             ErrorCode = "unknownNetwork"
+	ErrRepresentationNotSupported ErrorCode = "representationNotSupported"
 
 	StateType                            = "Iden3StateInfo2023"
 	Iden3ResolutionMetadataType          = "Iden3ResolutionMetadata"
@@ -59,10 +60,9 @@ func NewDidResolution() *DidResolution {
 			VerificationMethod: []verifiable.CommonVerificationMethod{},
 		},
 		DidResolutionMetadata: &DidResolutionMetadata{
-			Context:     []string{iden3ResolutionContext},
-			Type:        Iden3ResolutionMetadataType,
-			ContentType: defaultContentType,
-			Retrieved:   time.Now(),
+			Context:   []string{iden3ResolutionContext},
+			Type:      Iden3ResolutionMetadataType,
+			Retrieved: time.Now(),
 		},
 		DidDocumentMetadata: &DidDocumentMetadata{},
 	}

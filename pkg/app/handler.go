@@ -9,11 +9,26 @@ import (
 
 	"github.com/iden3/driver-did-iden3/pkg/document"
 	"github.com/iden3/driver-did-iden3/pkg/services"
-	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-merkletree-sql/v2"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/pkg/errors"
 )
+
+type acceptType string
+
+const (
+	acceptAny           acceptType = "*/*"
+	acceptDIDJSON       acceptType = "application/did+json"
+	acceptDIDLDJSON     acceptType = "application/did+ld+json"
+	acceptDIDResolution acceptType = "application/did-resolution+json"
+)
+
+var supportedAccept = []acceptType{
+	acceptDIDLDJSON,
+	acceptDIDJSON,
+	acceptDIDResolution,
+	acceptAny,
+}
 
 type DidDocumentHandler struct {
 	DidDocumentService *services.DidDocumentServices
@@ -33,20 +48,100 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state, err := d.DidDocumentService.GetDidDocument(r.Context(), rawURL[len(rawURL)-1], &opts)
-	if errors.Is(err, core.ErrIncorrectDID) {
-		log.Println("invalid did:", err)
+	// DidResolutionMetadata.ContentType should be included only if Accept header or query param is explicitly set
+	acceptQuery := strings.TrimSpace(r.URL.Query().Get("accept"))
+	acceptHeader := strings.TrimSpace(r.Header.Get("Accept"))
+	explicitAccept :=
+		acceptQuery != "" ||
+			(acceptHeader != "" && acceptHeader != "*/*")
 
-	} else if err != nil {
+	accept := pickAccept(r)
+	if accept == "" {
+		w.Header().Set("Content-Type", string(acceptDIDResolution))
+		w.WriteHeader(http.StatusNotAcceptable)
+		resp := document.DidResolution{
+			DidResolutionMetadata: &document.DidResolutionMetadata{
+				Error: document.ErrRepresentationNotSupported,
+			},
+		}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			log.Println("failed write response:", err)
+		}
+		return
+	}
+
+	didResolution, err := d.DidDocumentService.GetDidDocument(r.Context(), rawURL[len(rawURL)-1], &opts)
+	if err != nil {
 		log.Printf("failed get did document: %+v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-type", "application/json")
+	if accept == acceptAny {
+		accept = acceptDIDResolution
+	}
+
+	// Handle DID Resolution protocol-level errors that are returned in the resolution metadata.
+	if didResolution != nil && didResolution.DidResolutionMetadata != nil && didResolution.DidResolutionMetadata.Error != "" {
+		var status int
+		switch didResolution.DidResolutionMetadata.Error {
+		case document.ErrInvalidDID:
+			status = http.StatusBadRequest
+		case document.ErrNotFound:
+			status = http.StatusNotFound
+		case document.ErrMethodNotSupported:
+			status = http.StatusNotImplemented
+		default:
+			status = http.StatusInternalServerError
+		}
+		w.Header().Set("Content-Type", string(acceptDIDResolution))
+		if explicitAccept {
+			didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
+		}
+		w.WriteHeader(status)
+		if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+			log.Println("failed write response:", err)
+		}
+		return
+	}
+
+	switch accept {
+	case acceptDIDJSON, acceptDIDLDJSON:
+		if didResolution == nil || didResolution.DidDocument == nil {
+			log.Println("failed write response: did document is nil")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", string(accept))
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(didResolution.DidDocument); err != nil {
+			log.Println("failed write response:", err)
+		}
+		return
+	case acceptDIDResolution:
+		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
+		return
+	default:
+		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
+		return
+	}
+}
+
+func writeDIDResolution(
+	w http.ResponseWriter,
+	didResolution *document.DidResolution,
+	contentType string,
+	explicitAccept bool,
+) {
+	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(state); err != nil {
-		log.Println("failed write response")
+
+	if explicitAccept && didResolution.DidResolutionMetadata != nil {
+		didResolution.DidResolutionMetadata.ContentType = contentType
+	}
+
+	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+		log.Println("failed write response:", err)
 	}
 }
 
@@ -62,7 +157,7 @@ func (d *DidDocumentHandler) GetByDNSDomain(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(state); err != nil {
 		log.Println("failed write response")
@@ -170,4 +265,54 @@ func getResolverOpts(state, gistRoot, signature string) (ro services.ResolverOpt
 		ro.Signature = signature
 	}
 	return
+}
+
+func pickAccept(r *http.Request) acceptType {
+	if q := strings.TrimSpace(r.URL.Query().Get("accept")); q != "" {
+		mt := normalizeMediaType(q)
+		if isSupported(mt) {
+			return mt
+		}
+		return ""
+	}
+
+	h := strings.TrimSpace(r.Header.Get("Accept"))
+	if h == "" {
+		return acceptAny
+	}
+
+	for _, p := range strings.Split(h, ",") {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		mt := normalizeMediaType(p)
+		if isSupported(mt) {
+			return mt
+		}
+	}
+	return ""
+}
+
+func normalizeMediaType(v string) acceptType {
+	v = stripParams(v)
+	v = strings.TrimSpace(v)
+	v = strings.ToLower(v)
+	return acceptType(v)
+}
+
+func isSupported(mt acceptType) bool {
+	for _, s := range supportedAccept {
+		if mt == s {
+			return true
+		}
+	}
+	return false
+}
+
+func stripParams(v string) string {
+	if i := strings.IndexByte(v, ';'); i >= 0 {
+		return v[:i]
+	}
+	return v
 }
