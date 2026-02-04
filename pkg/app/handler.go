@@ -20,8 +20,8 @@ const (
 	acceptAny                 acceptType = "*/*"
 	acceptDIDJSON             acceptType = "application/did+json"
 	acceptDIDLDJSON           acceptType = "application/did+ld+json"
-	acceptDIDResolutionJson   acceptType = "application/did-resolution+json"
-	acceptDIDResolutionLDJson acceptType = "application/did-resolution+ld+json"
+	acceptDIDResolutionJSON   acceptType = "application/did-resolution+json"
+	acceptDIDResolutionLDJSON acceptType = "application/did-resolution+ld+json"
 	acceptDIDResolution       acceptType = "application/did-resolution"
 )
 
@@ -29,8 +29,8 @@ var supportedAccept = []acceptType{
 	acceptDIDLDJSON,
 	acceptDIDJSON,
 	acceptDIDResolution,
-	acceptDIDResolutionJson,
-	acceptDIDResolutionLDJson,
+	acceptDIDResolutionJSON,
+	acceptDIDResolutionLDJSON,
 	acceptAny,
 }
 
@@ -122,11 +122,8 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 			log.Println("failed write response:", err)
 		}
 		return
-	case acceptDIDResolution, acceptDIDResolutionJson:
-		writeDIDResolution(w, didResolution, string(acceptDIDResolutionJson), explicitAccept)
-		return
-	case acceptDIDResolutionLDJson:
-		writeDIDResolution(w, didResolution, string(acceptDIDResolutionLDJson), explicitAccept)
+	case acceptDIDResolution, acceptDIDResolutionJSON, acceptDIDResolutionLDJSON:
+		writeDIDResolution(w, didResolution, string(accept), explicitAccept)
 		return
 	default:
 		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
