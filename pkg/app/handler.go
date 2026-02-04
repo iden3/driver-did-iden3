@@ -52,13 +52,6 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// DidResolutionMetadata.ContentType should be included only if Accept header or query param is explicitly set
-	acceptQuery := strings.TrimSpace(r.URL.Query().Get("accept"))
-	acceptHeader := strings.TrimSpace(r.Header.Get("Accept"))
-	explicitAccept :=
-		acceptQuery != "" ||
-			(acceptHeader != "" && acceptHeader != "*/*")
-
 	accept := pickAccept(r)
 	if accept == "" {
 		w.Header().Set("Content-Type", string(acceptDIDResolution))
@@ -82,7 +75,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if accept == acceptAny {
-		accept = acceptDIDResolution
+		accept = acceptDIDResolutionJSON
 	}
 
 	// Handle DID Resolution protocol-level errors that are returned in the resolution metadata.
@@ -99,9 +92,6 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 			status = http.StatusInternalServerError
 		}
 		w.Header().Set("Content-Type", string(acceptDIDResolution))
-		if explicitAccept {
-			didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
-		}
 		w.WriteHeader(status)
 		if err := json.NewEncoder(w).Encode(didResolution); err != nil {
 			log.Println("failed write response:", err)
@@ -123,10 +113,10 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case acceptDIDResolution, acceptDIDResolutionJSON, acceptDIDResolutionLDJSON:
-		writeDIDResolution(w, didResolution, string(accept), explicitAccept)
+		writeDIDResolution(w, didResolution, string(accept))
 		return
 	default:
-		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
+		writeDIDResolution(w, didResolution, string(acceptDIDResolution))
 		return
 	}
 }
@@ -135,14 +125,9 @@ func writeDIDResolution(
 	w http.ResponseWriter,
 	didResolution *document.DidResolution,
 	contentType string,
-	explicitAccept bool,
 ) {
 	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(http.StatusOK)
-
-	if explicitAccept && didResolution.DidResolutionMetadata != nil {
-		didResolution.DidResolutionMetadata.ContentType = contentType
-	}
 
 	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
 		log.Println("failed write response:", err)
