@@ -122,9 +122,11 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 			log.Println("failed write response:", err)
 		}
 		return
-	case acceptDIDResolution, acceptDIDResolutionJson, acceptDIDResolutionLDJson:
+	case acceptDIDResolution, acceptDIDResolutionJson:
 		writeDIDResolution(w, didResolution, string(acceptDIDResolutionJson), explicitAccept)
 		return
+	case acceptDIDResolutionLDJson:
+		writeDIDResolution(w, didResolution, string(acceptDIDResolutionLDJson), explicitAccept)
 	default:
 		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
 		return
