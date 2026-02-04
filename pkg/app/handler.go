@@ -53,11 +53,14 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	if accept == "" {
 		w.Header().Set("Content-Type", string(acceptDIDResolution))
 		w.WriteHeader(http.StatusNotAcceptable)
-		_ = json.NewEncoder(w).Encode(document.DidResolution{
+		err = json.NewEncoder(w).Encode(document.DidResolution{
 			DidResolutionMetadata: &document.DidResolutionMetadata{
 				Error: document.ErrRepresentationNotSupported,
 			},
 		})
+		if err != nil {
+			log.Println("failed write response:", err)
+		}
 		return
 	}
 
@@ -307,7 +310,9 @@ func (d *DidDocumentHandler) resolveRepresentation(
 	}
 	w.Header().Set("Content-Type", string(acceptDIDResolution))
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		log.Println("failed write response:", err)
+	}
 }
 
 func buildDidDocumentStream(doc *verifiable.DIDDocument, accept acceptType) (string, error) {
@@ -359,6 +364,8 @@ func writeProtocolErrorIfAny(
 
 	w.Header().Set("Content-Type", string(acceptDIDResolution))
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(didResolution)
+	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+		log.Println("failed write response:", err)
+	}
 	return true
 }
