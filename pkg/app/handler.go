@@ -127,6 +127,7 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	case acceptDIDResolutionLDJson:
 		writeDIDResolution(w, didResolution, string(acceptDIDResolutionLDJson), explicitAccept)
+		return
 	default:
 		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
 		return
