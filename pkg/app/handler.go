@@ -337,12 +337,12 @@ func buildDidDocumentStream(doc *verifiable.DIDDocument, accept acceptType) (str
 	}
 
 	// application/did+json must not include @context
-	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(b, &obj); err != nil {
 		return "", err
 	}
-	delete(m, "@context")
-	out, err := json.Marshal(m)
+	delete(obj, "@context")
+	out, err := json.Marshal(obj)
 	if err != nil {
 		return "", err
 	}
