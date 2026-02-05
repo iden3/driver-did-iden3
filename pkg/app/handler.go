@@ -17,20 +17,16 @@ import (
 type acceptType string
 
 const (
-	acceptAny                 acceptType = "*/*"
-	acceptDIDJSON             acceptType = "application/did+json"
-	acceptDIDLDJSON           acceptType = "application/did+ld+json"
-	acceptDIDResolutionJSON   acceptType = "application/did-resolution+json"
-	acceptDIDResolutionLDJSON acceptType = "application/did-resolution+ld+json"
-	acceptDIDResolution       acceptType = "application/did-resolution"
+	acceptAny           acceptType = "*/*"
+	acceptDIDJSON       acceptType = "application/did+json"
+	acceptDIDLDJSON     acceptType = "application/did+ld+json"
+	acceptDIDResolution acceptType = "application/did-resolution"
 )
 
 var supportedAccept = []acceptType{
 	acceptDIDLDJSON,
 	acceptDIDJSON,
 	acceptDIDResolution,
-	acceptDIDResolutionJSON,
-	acceptDIDResolutionLDJSON,
 	acceptAny,
 }
 
@@ -38,9 +34,12 @@ type DidDocumentHandler struct {
 	DidDocumentService *services.DidDocumentServices
 }
 
-// Get a did document by a did identifier.
+// Get resolves a DID document for the given request and writes the response
+// according to the requested representation.
 func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	rawURL := strings.Split(r.URL.Path, "/")
+	did := rawURL[len(rawURL)-1]
+
 	opts, err := getResolverOpts(
 		r.URL.Query().Get("state"),
 		r.URL.Query().Get("gist"),
@@ -52,32 +51,18 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// DidResolutionMetadata.ContentType should be included only if Accept header or query param is explicitly set
-	acceptQuery := strings.TrimSpace(r.URL.Query().Get("accept"))
-	acceptHeader := strings.TrimSpace(r.Header.Get("Accept"))
-	explicitAccept :=
-		acceptQuery != "" ||
-			(acceptHeader != "" && acceptHeader != "*/*")
-
 	accept := pickAccept(r)
 	if accept == "" {
 		w.Header().Set("Content-Type", string(acceptDIDResolution))
 		w.WriteHeader(http.StatusNotAcceptable)
-		resp := document.DidResolution{
+		err = json.NewEncoder(w).Encode(document.DidResolution{
 			DidResolutionMetadata: &document.DidResolutionMetadata{
 				Error: document.ErrRepresentationNotSupported,
 			},
-		}
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		})
+		if err != nil {
 			log.Println("failed write response:", err)
 		}
-		return
-	}
-
-	didResolution, err := d.DidDocumentService.GetDidDocument(r.Context(), rawURL[len(rawURL)-1], &opts)
-	if err != nil {
-		log.Printf("failed get did document: %+v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -85,49 +70,28 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		accept = acceptDIDResolution
 	}
 
-	// Handle DID Resolution protocol-level errors that are returned in the resolution metadata.
-	if didResolution != nil && didResolution.DidResolutionMetadata != nil && didResolution.DidResolutionMetadata.Error != "" {
-		var status int
-		switch didResolution.DidResolutionMetadata.Error {
-		case document.ErrInvalidDID:
-			status = http.StatusBadRequest
-		case document.ErrNotFound:
-			status = http.StatusNotFound
-		case document.ErrMethodNotSupported:
-			status = http.StatusNotImplemented
-		default:
-			status = http.StatusInternalServerError
-		}
-		w.Header().Set("Content-Type", string(acceptDIDResolution))
-		if explicitAccept {
-			didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
-		}
-		w.WriteHeader(status)
-		if err := json.NewEncoder(w).Encode(didResolution); err != nil {
-			log.Println("failed write response:", err)
-		}
+	didResolution, err := d.DidDocumentService.GetDidDocument(r.Context(), did, &opts)
+	if err != nil {
+		log.Printf("failed get did document: %+v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if writeProtocolErrorIfAny(w, didResolution) {
 		return
 	}
 
 	switch accept {
 	case acceptDIDJSON, acceptDIDLDJSON:
-		if didResolution == nil || didResolution.DidDocument == nil {
-			log.Println("failed write response: did document is nil")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", string(accept))
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(didResolution.DidDocument); err != nil {
-			log.Println("failed write response:", err)
-		}
+		d.resolveRepresentation(w, didResolution, accept)
 		return
-	case acceptDIDResolution, acceptDIDResolutionJSON, acceptDIDResolutionLDJSON:
-		writeDIDResolution(w, didResolution, string(accept), explicitAccept)
+
+	case acceptDIDResolution:
+		d.resolve(w, didResolution)
 		return
+
 	default:
-		writeDIDResolution(w, didResolution, string(acceptDIDResolution), explicitAccept)
-		return
+		d.resolve(w, didResolution)
 	}
 }
 
@@ -135,14 +99,9 @@ func writeDIDResolution(
 	w http.ResponseWriter,
 	didResolution *document.DidResolution,
 	contentType string,
-	explicitAccept bool,
 ) {
 	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(http.StatusOK)
-
-	if explicitAccept && didResolution.DidResolutionMetadata != nil {
-		didResolution.DidResolutionMetadata.ContentType = contentType
-	}
 
 	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
 		log.Println("failed write response:", err)
@@ -205,7 +164,7 @@ func (d *DidDocumentHandler) GetGist(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Content-type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(gistInfo); err != nil {
 		log.Println("failed write response")
@@ -319,4 +278,103 @@ func stripParams(v string) string {
 		return v[:i]
 	}
 	return v
+}
+
+func (d *DidDocumentHandler) resolve(
+	w http.ResponseWriter,
+	didResolution *document.DidResolution,
+) {
+	writeDIDResolution(w, didResolution, string(acceptDIDResolution))
+}
+
+func (d *DidDocumentHandler) resolveRepresentation(
+	w http.ResponseWriter,
+	didResolution *document.DidResolution,
+	accept acceptType,
+) {
+	if didResolution == nil {
+		log.Println("didResolution is nil")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if didResolution.DidResolutionMetadata == nil {
+		didResolution.DidResolutionMetadata = &document.DidResolutionMetadata{}
+	}
+	didResolution.DidResolutionMetadata.ContentType = string(accept)
+
+	stream, err := buildDidDocumentStream(didResolution.DidDocument, accept)
+	if err != nil {
+		log.Println("failed build didDocumentStream:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp := &document.DidResolution{
+		Context:               didResolution.Context,
+		DidDocumentStream:     stream,
+		DidResolutionMetadata: didResolution.DidResolutionMetadata,
+		DidDocumentMetadata:   didResolution.DidDocumentMetadata,
+	}
+	w.Header().Set("Content-Type", string(acceptDIDResolution))
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		log.Println("failed write response:", err)
+	}
+}
+
+func buildDidDocumentStream(doc *verifiable.DIDDocument, accept acceptType) (string, error) {
+	if doc == nil {
+		return "", fmt.Errorf("didDocument is nil")
+	}
+	b, err := json.Marshal(doc)
+	if err != nil {
+		return "", err
+	}
+
+	if accept == acceptDIDLDJSON {
+		return string(b), nil
+	}
+
+	// application/did+json must not include @context
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(b, &obj); err != nil {
+		return "", err
+	}
+	delete(obj, "@context")
+	out, err := json.Marshal(obj)
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func writeProtocolErrorIfAny(
+	w http.ResponseWriter,
+	didResolution *document.DidResolution,
+) bool {
+	if didResolution == nil ||
+		didResolution.DidResolutionMetadata == nil ||
+		didResolution.DidResolutionMetadata.Error == "" {
+		return false
+	}
+
+	var status int
+	switch didResolution.DidResolutionMetadata.Error {
+	case document.ErrInvalidDID:
+		status = http.StatusBadRequest
+	case document.ErrNotFound:
+		status = http.StatusNotFound
+	case document.ErrMethodNotSupported:
+		status = http.StatusNotImplemented
+	default:
+		status = http.StatusInternalServerError
+	}
+
+	w.Header().Set("Content-Type", string(acceptDIDResolution))
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(didResolution); err != nil {
+		log.Println("failed write response:", err)
+	}
+	return true
 }

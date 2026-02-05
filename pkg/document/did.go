@@ -43,8 +43,9 @@ const (
 
 // DidResolution representation of did resolution.
 type DidResolution struct {
-	Context     string                  `json:"@context,omitempty"`
-	DidDocument *verifiable.DIDDocument `json:"didDocument"`
+	Context           string                  `json:"@context,omitempty"`
+	DidDocument       *verifiable.DIDDocument `json:"didDocument,omitempty"`
+	DidDocumentStream string                  `json:"didDocumentStream,omitempty"`
 	// should exist in responses, but can be empty.
 	// https://www.w3.org/TR/did-core/#did-resolution
 	DidResolutionMetadata *DidResolutionMetadata `json:"didResolutionMetadata"`
