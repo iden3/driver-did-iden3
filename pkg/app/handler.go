@@ -56,9 +56,12 @@ func (d *DidDocumentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", string(acceptDIDResolution))
 		w.WriteHeader(http.StatusNotAcceptable)
 		err = json.NewEncoder(w).Encode(document.DidResolution{
+			DidDocument: nil,
 			DidResolutionMetadata: &document.DidResolutionMetadata{
-				Error: document.ErrRepresentationNotSupported,
+				Error:       document.NewResolutionError(document.ErrRepresentationNotSupported, ""),
+				ContentType: string(acceptDIDResolution),
 			},
+			DidDocumentMetadata: &document.DidDocumentMetadata{},
 		})
 		if err != nil {
 			log.Println("failed write response:", err)
@@ -284,6 +287,11 @@ func (d *DidDocumentHandler) resolve(
 	w http.ResponseWriter,
 	didResolution *document.DidResolution,
 ) {
+	if didResolution.DidResolutionMetadata == nil {
+		didResolution.DidResolutionMetadata = &document.DidResolutionMetadata{}
+	}
+	didResolution.DidResolutionMetadata.ContentType = string(acceptDIDResolution)
+
 	writeDIDResolution(w, didResolution, string(acceptDIDResolution))
 }
 
@@ -298,11 +306,6 @@ func (d *DidDocumentHandler) resolveRepresentation(
 		return
 	}
 
-	if didResolution.DidResolutionMetadata == nil {
-		didResolution.DidResolutionMetadata = &document.DidResolutionMetadata{}
-	}
-	didResolution.DidResolutionMetadata.ContentType = string(accept)
-
 	stream, err := buildDidDocumentStream(didResolution.DidDocument, accept)
 	if err != nil {
 		log.Println("failed build didDocumentStream:", err)
@@ -310,15 +313,9 @@ func (d *DidDocumentHandler) resolveRepresentation(
 		return
 	}
 
-	resp := &document.DidResolution{
-		Context:               didResolution.Context,
-		DidDocumentStream:     stream,
-		DidResolutionMetadata: didResolution.DidResolutionMetadata,
-		DidDocumentMetadata:   didResolution.DidDocumentMetadata,
-	}
-	w.Header().Set("Content-Type", string(acceptDIDResolution))
+	w.Header().Set("Content-Type", string(accept))
 	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(resp); err != nil {
+	if _, err = w.Write([]byte(stream)); err != nil {
 		log.Println("failed write response:", err)
 	}
 }
@@ -355,18 +352,21 @@ func writeProtocolErrorIfAny(
 ) bool {
 	if didResolution == nil ||
 		didResolution.DidResolutionMetadata == nil ||
-		didResolution.DidResolutionMetadata.Error == "" {
+		didResolution.DidResolutionMetadata.Error == nil {
 		return false
 	}
 
 	var status int
-	switch didResolution.DidResolutionMetadata.Error {
-	case document.ErrInvalidDID:
+	errorType := didResolution.DidResolutionMetadata.Error.Type
+	switch errorType {
+	case "https://www.w3.org/ns/did#INVALID_DID":
 		status = http.StatusBadRequest
-	case document.ErrNotFound:
+	case "https://www.w3.org/ns/did#NOT_FOUND":
 		status = http.StatusNotFound
-	case document.ErrMethodNotSupported:
+	case "https://www.w3.org/ns/did#METHOD_NOT_SUPPORTED":
 		status = http.StatusNotImplemented
+	case "https://www.w3.org/ns/did#REPRESENTATION_NOT_SUPPORTED":
+		status = http.StatusNotAcceptable
 	default:
 		status = http.StatusInternalServerError
 	}

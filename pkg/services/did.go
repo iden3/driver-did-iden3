@@ -101,41 +101,15 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		return d.resolveAdditionalSource(ctx, *userDID, resolution)
 	}
 
-	userID, err := core.IDFromDID(*userDID)
-	errResolution, err = expectedError(err)
-	if errResolution != nil || err != nil {
-		return errResolution, err
-	}
-
-	b, err := core.BlockchainFromID(userID)
-	errResolution, err = expectedError(err)
-	if errResolution != nil || err != nil {
-		return errResolution, err
-	}
-
-	n, err := core.NetworkIDFromID(userID)
-	errResolution, err = expectedError(err)
-	if errResolution != nil || err != nil {
-		return errResolution, err
-	}
-
-	resolver, err := d.resolvers.GetResolverByNetwork(string(b), string(n))
-	errResolution, err = expectedError(err)
+	userID, resolver, errResolution, err := d.getResolverForDID(*userDID)
 	if errResolution != nil || err != nil {
 		return errResolution, err
 	}
 
 	identityState, err := resolver.Resolve(ctx, *userDID, opts)
-	if errors.Is(err, ErrNotFound) && (opts.State != nil || opts.GistRoot != nil) {
-		gen, errr := isGenesis(userID.BigInt(), opts.State)
-		if errr != nil {
-			return nil, fmt.Errorf("invalid state: %v", errr)
-		}
-		if !gen {
-			return document.NewDidNotFoundResolution(err.Error()), nil
-		}
-	} else if err != nil && opts.State != nil {
-		return document.NewDidNotFoundResolution(err.Error()), nil
+	errResolution, err = handleIdentityResolveError(err, opts, userID.BigInt())
+	if errResolution != nil || err != nil {
+		return errResolution, err
 	}
 
 	info, err := identityState.StateInfo.ToDidRepresentation()
@@ -198,6 +172,57 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 	}
 
 	return d.resolveAdditionalSource(ctx, *userDID, didResolution)
+}
+
+func (d *DidDocumentServices) getResolverForDID(userDID w3c.DID) (core.ID, Resolver, *document.DidResolution, error) {
+	userID, err := core.IDFromDID(userDID)
+	errResolution, err := expectedError(err)
+	if errResolution != nil || err != nil {
+		return core.ID{}, nil, errResolution, err
+	}
+
+	b, err := core.BlockchainFromID(userID)
+	errResolution, err = expectedError(err)
+	if errResolution != nil || err != nil {
+		return core.ID{}, nil, errResolution, err
+	}
+
+	n, err := core.NetworkIDFromID(userID)
+	errResolution, err = expectedError(err)
+	if errResolution != nil || err != nil {
+		return core.ID{}, nil, errResolution, err
+	}
+
+	resolver, err := d.resolvers.GetResolverByNetwork(string(b), string(n))
+	errResolution, err = expectedError(err)
+	if errResolution != nil || err != nil {
+		return core.ID{}, nil, errResolution, err
+	}
+
+	return userID, resolver, nil, nil
+}
+
+func handleIdentityResolveError(err error, opts *ResolverOpts, userID *big.Int) (*document.DidResolution, error) {
+	if err == nil {
+		return nil, nil
+	}
+
+	if errors.Is(err, ErrNotFound) && (opts.State != nil || opts.GistRoot != nil) {
+		gen, errr := isGenesis(userID, opts.State)
+		if errr != nil {
+			return nil, fmt.Errorf("invalid state: %v", errr)
+		}
+		if !gen {
+			return document.NewDidNotFoundResolution(err.Error()), nil
+		}
+		return nil, nil
+	}
+
+	if opts.State != nil || errors.Is(err, ErrNotFound) {
+		return document.NewDidNotFoundResolution(err.Error()), nil
+	}
+
+	return nil, err
 }
 
 // ResolveDNSDomain return did document by domain via DNS.
