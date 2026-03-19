@@ -14,7 +14,31 @@ const (
 	ErrNotFound                   ErrorCode = "notFound"
 	ErrUnknownNetwork             ErrorCode = "unknownNetwork"
 	ErrRepresentationNotSupported ErrorCode = "representationNotSupported"
+)
 
+// W3C DID Resolution error URIs
+var errorTypeURIs = map[ErrorCode]string{
+	ErrInvalidDID:                 "https://www.w3.org/ns/did#INVALID_DID",
+	ErrMethodNotSupported:         "https://www.w3.org/ns/did#METHOD_NOT_SUPPORTED",
+	ErrNotFound:                   "https://www.w3.org/ns/did#NOT_FOUND",
+	ErrUnknownNetwork:             "https://www.w3.org/ns/did#NOT_FOUND",
+	ErrRepresentationNotSupported: "https://www.w3.org/ns/did#REPRESENTATION_NOT_SUPPORTED",
+}
+
+// ResolutionError represents a DID resolution error
+type ResolutionError struct {
+	Type    string `json:"type"`
+	Message string `json:"message,omitempty"`
+}
+
+func NewResolutionError(errCode ErrorCode, errMsg string) *ResolutionError {
+	return &ResolutionError{
+		Type:    errorTypeURIs[errCode],
+		Message: errMsg,
+	}
+}
+
+const (
 	StateType                            = "Iden3StateInfo2023"
 	Iden3ResolutionMetadataType          = "Iden3ResolutionMetadata"
 	EcdsaSecp256k1RecoveryMethod2020Type = "EcdsaSecp256k1RecoveryMethod2020"
@@ -44,7 +68,7 @@ const (
 // DidResolution representation of did resolution.
 type DidResolution struct {
 	Context           string                  `json:"@context,omitempty"`
-	DidDocument       *verifiable.DIDDocument `json:"didDocument,omitempty"`
+	DidDocument       *verifiable.DIDDocument `json:"didDocument"`
 	DidDocumentStream string                  `json:"didDocumentStream,omitempty"`
 	// should exist in responses, but can be empty.
 	// https://www.w3.org/TR/did-core/#did-resolution
@@ -61,9 +85,10 @@ func NewDidResolution() *DidResolution {
 			VerificationMethod: []verifiable.CommonVerificationMethod{},
 		},
 		DidResolutionMetadata: &DidResolutionMetadata{
-			Context:   []string{iden3ResolutionContext},
-			Type:      Iden3ResolutionMetadataType,
-			Retrieved: time.Now(),
+			Context:     []string{iden3ResolutionContext},
+			Type:        Iden3ResolutionMetadataType,
+			Retrieved:   time.Now(),
+			ContentType: defaultContentType,
 		},
 		DidDocumentMetadata: &DidDocumentMetadata{},
 	}
@@ -92,9 +117,9 @@ func NewDidNotFoundResolution(msg string) *DidResolution {
 func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 	return &DidResolution{
 		DidResolutionMetadata: &DidResolutionMetadata{
-			Error:     errCode,
-			Message:   errMsg,
-			Retrieved: time.Now(),
+			Error:       NewResolutionError(errCode, errMsg),
+			Retrieved:   time.Now(),
+			ContentType: "application/did-resolution",
 		},
 		DidDocumentMetadata: &DidDocumentMetadata{},
 	}
@@ -103,8 +128,7 @@ func NewDidErrorResolution(errCode ErrorCode, errMsg string) *DidResolution {
 // DidResolutionMetadata representation of resolution metadata.
 type DidResolutionMetadata struct {
 	Context     []string            `json:"@context,omitempty"`
-	Error       ErrorCode           `json:"error,omitempty"`
-	Message     string              `json:"message,omitempty"`
+	Error       *ResolutionError    `json:"error,omitempty"`
 	ContentType string              `json:"contentType,omitempty"`
 	Retrieved   time.Time           `json:"retrieved,omitempty"`
 	Type        string              `json:"type,omitempty"`

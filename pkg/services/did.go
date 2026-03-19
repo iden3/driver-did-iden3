@@ -136,6 +136,10 @@ func (d *DidDocumentServices) GetDidDocument(ctx context.Context, did string, op
 		}
 	} else if err != nil && opts.State != nil {
 		return document.NewDidNotFoundResolution(err.Error()), nil
+	} else if errors.Is(err, ErrNotFound) {
+		return document.NewDidNotFoundResolution(err.Error()), nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	info, err := identityState.StateInfo.ToDidRepresentation()
