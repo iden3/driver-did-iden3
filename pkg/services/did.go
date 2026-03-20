@@ -216,13 +216,11 @@ func handleIdentityResolveError(err error, opts *ResolverOpts, userID *big.Int) 
 			return document.NewDidNotFoundResolution(err.Error()), nil
 		}
 		return nil, nil
-	}
-
-	if opts.State != nil || errors.Is(err, ErrNotFound) {
+	} else if opts.State != nil {
 		return document.NewDidNotFoundResolution(err.Error()), nil
 	}
 
-	return nil, err
+	return nil, nil
 }
 
 // ResolveDNSDomain return did document by domain via DNS.
