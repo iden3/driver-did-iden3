@@ -47,12 +47,6 @@ jobs:
           echo -e "  main:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ vars.STATE_POLYGON_MAIN }}" >> resolvers.settings.yaml
           echo -e "    networkURL: ${{ secrets.RPC_POLYGON_MAIN }}" >> resolvers.settings.yaml
-          echo -e "  cardona:" >> resolvers.settings.yaml
-          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
-          echo -e "    networkURL: ${{ secrets.RPC_POLYGON_ZKEVM_CARDONA }}" >> resolvers.settings.yaml
-          echo -e "  zkevm:" >> resolvers.settings.yaml
-          echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
-          echo -e "    networkURL: ${{ secrets.RPC_POLYGON_ZKEVM_MAIN }}" >> resolvers.settings.yaml
           echo -e "privado:" >> resolvers.settings.yaml
           echo -e "  main:" >> resolvers.settings.yaml
           echo -e "    contractAddress: ${{ vars.STATE_UNIFIED }}" >> resolvers.settings.yaml
